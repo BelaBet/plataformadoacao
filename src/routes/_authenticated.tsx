@@ -31,6 +31,33 @@ function AuthLayout() {
   }
   if (!user) return null;
 
+  if (profile?.status === "pending") {
+    return (
+      <div className="flex min-h-screen items-center justify-center px-4">
+        <div className="w-full max-w-md text-center">
+          <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-amber-500/10 text-amber-600 text-2xl">⏳</div>
+          <h1 className="font-display text-2xl">Aguardando aprovação do gestor</h1>
+          <p className="mt-3 text-muted-foreground">
+            Sua conta foi criada com sucesso. Assim que um gestor aprovar seu cadastro, você terá acesso completo à comunidade.
+          </p>
+          <Button variant="outline" className="mt-6" onClick={signOut}>Sair</Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (profile?.status === "rejected") {
+    return (
+      <div className="flex min-h-screen items-center justify-center px-4">
+        <div className="w-full max-w-md text-center">
+          <h1 className="font-display text-2xl">Cadastro não aprovado</h1>
+          <p className="mt-3 text-muted-foreground">Entre em contato com o gestor da sua comunidade.</p>
+          <Button variant="outline" className="mt-6" onClick={signOut}>Sair</Button>
+        </div>
+      </div>
+    );
+  }
+
   const name = tenant?.name ?? "Comunidade";
 
   return (
