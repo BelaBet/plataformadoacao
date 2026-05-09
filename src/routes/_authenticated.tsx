@@ -11,7 +11,7 @@ export const Route = createFileRoute("/_authenticated")({
 });
 
 function AuthLayout() {
-  const { user, loading, signOut, profile } = useAuth();
+  const { user, loading, signOut, profile, isStaff } = useAuth();
   const { tenant } = useTenant();
   const router = useRouter();
 
@@ -80,6 +80,7 @@ function AuthLayout() {
             <Button asChild variant="ghost" size="sm"><Link to="/groups">Grupos</Link></Button>
             <Button asChild variant="ghost" size="sm"><Link to="/messages">Mensagens</Link></Button>
             <Button asChild variant="ghost" size="sm"><Link to="/notifications"><Bell className="h-4 w-4" /></Link></Button>
+            {isStaff && <Button asChild variant="default" size="sm"><Link to="/manage/dashboard">Gestão</Link></Button>}
             <Button asChild variant="ghost" size="sm"><Link to="/profile">Perfil</Link></Button>
             <Button onClick={signOut} variant="ghost" size="sm">
               <LogOut className="h-4 w-4" /> Sair

@@ -20,9 +20,14 @@ import { Route as AuthenticatedScanRouteImport } from './routes/_authenticated/s
 import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
 import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authenticated/notifications'
 import { Route as AuthenticatedMessagesRouteImport } from './routes/_authenticated/messages'
+import { Route as AuthenticatedManageRouteImport } from './routes/_authenticated/manage'
 import { Route as AuthenticatedGroupsRouteImport } from './routes/_authenticated/groups'
 import { Route as AuthenticatedEventsRouteImport } from './routes/_authenticated/events'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedManageIndexRouteImport } from './routes/_authenticated/manage.index'
+import { Route as AuthenticatedManageSettingsRouteImport } from './routes/_authenticated/manage.settings'
+import { Route as AuthenticatedManageMembersRouteImport } from './routes/_authenticated/manage.members'
+import { Route as AuthenticatedManageDashboardRouteImport } from './routes/_authenticated/manage.dashboard'
 import { Route as AuthenticatedGroupsGroupIdRouteImport } from './routes/_authenticated/groups.$groupId'
 import { Route as AuthenticatedEventsNewRouteImport } from './routes/_authenticated/events.new'
 import { Route as AuthenticatedEventsEventIdRouteImport } from './routes/_authenticated/events.$eventId'
@@ -82,6 +87,11 @@ const AuthenticatedMessagesRoute = AuthenticatedMessagesRouteImport.update({
   path: '/messages',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedManageRoute = AuthenticatedManageRouteImport.update({
+  id: '/manage',
+  path: '/manage',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedGroupsRoute = AuthenticatedGroupsRouteImport.update({
   id: '/groups',
   path: '/groups',
@@ -97,6 +107,30 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedManageIndexRoute =
+  AuthenticatedManageIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedManageRoute,
+  } as any)
+const AuthenticatedManageSettingsRoute =
+  AuthenticatedManageSettingsRouteImport.update({
+    id: '/settings',
+    path: '/settings',
+    getParentRoute: () => AuthenticatedManageRoute,
+  } as any)
+const AuthenticatedManageMembersRoute =
+  AuthenticatedManageMembersRouteImport.update({
+    id: '/members',
+    path: '/members',
+    getParentRoute: () => AuthenticatedManageRoute,
+  } as any)
+const AuthenticatedManageDashboardRoute =
+  AuthenticatedManageDashboardRouteImport.update({
+    id: '/dashboard',
+    path: '/dashboard',
+    getParentRoute: () => AuthenticatedManageRoute,
+  } as any)
 const AuthenticatedGroupsGroupIdRoute =
   AuthenticatedGroupsGroupIdRouteImport.update({
     id: '/$groupId',
@@ -124,6 +158,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/events': typeof AuthenticatedEventsRouteWithChildren
   '/groups': typeof AuthenticatedGroupsRouteWithChildren
+  '/manage': typeof AuthenticatedManageRouteWithChildren
   '/messages': typeof AuthenticatedMessagesRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/profile': typeof AuthenticatedProfileRoute
@@ -132,6 +167,10 @@ export interface FileRoutesByFullPath {
   '/events/$eventId': typeof AuthenticatedEventsEventIdRoute
   '/events/new': typeof AuthenticatedEventsNewRoute
   '/groups/$groupId': typeof AuthenticatedGroupsGroupIdRoute
+  '/manage/dashboard': typeof AuthenticatedManageDashboardRoute
+  '/manage/members': typeof AuthenticatedManageMembersRoute
+  '/manage/settings': typeof AuthenticatedManageSettingsRoute
+  '/manage/': typeof AuthenticatedManageIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -150,6 +189,10 @@ export interface FileRoutesByTo {
   '/events/$eventId': typeof AuthenticatedEventsEventIdRoute
   '/events/new': typeof AuthenticatedEventsNewRoute
   '/groups/$groupId': typeof AuthenticatedGroupsGroupIdRoute
+  '/manage/dashboard': typeof AuthenticatedManageDashboardRoute
+  '/manage/members': typeof AuthenticatedManageMembersRoute
+  '/manage/settings': typeof AuthenticatedManageSettingsRoute
+  '/manage': typeof AuthenticatedManageIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -162,6 +205,7 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/events': typeof AuthenticatedEventsRouteWithChildren
   '/_authenticated/groups': typeof AuthenticatedGroupsRouteWithChildren
+  '/_authenticated/manage': typeof AuthenticatedManageRouteWithChildren
   '/_authenticated/messages': typeof AuthenticatedMessagesRoute
   '/_authenticated/notifications': typeof AuthenticatedNotificationsRoute
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
@@ -170,6 +214,10 @@ export interface FileRoutesById {
   '/_authenticated/events/$eventId': typeof AuthenticatedEventsEventIdRoute
   '/_authenticated/events/new': typeof AuthenticatedEventsNewRoute
   '/_authenticated/groups/$groupId': typeof AuthenticatedGroupsGroupIdRoute
+  '/_authenticated/manage/dashboard': typeof AuthenticatedManageDashboardRoute
+  '/_authenticated/manage/members': typeof AuthenticatedManageMembersRoute
+  '/_authenticated/manage/settings': typeof AuthenticatedManageSettingsRoute
+  '/_authenticated/manage/': typeof AuthenticatedManageIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -182,6 +230,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/events'
     | '/groups'
+    | '/manage'
     | '/messages'
     | '/notifications'
     | '/profile'
@@ -190,6 +239,10 @@ export interface FileRouteTypes {
     | '/events/$eventId'
     | '/events/new'
     | '/groups/$groupId'
+    | '/manage/dashboard'
+    | '/manage/members'
+    | '/manage/settings'
+    | '/manage/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -208,6 +261,10 @@ export interface FileRouteTypes {
     | '/events/$eventId'
     | '/events/new'
     | '/groups/$groupId'
+    | '/manage/dashboard'
+    | '/manage/members'
+    | '/manage/settings'
+    | '/manage'
   id:
     | '__root__'
     | '/'
@@ -219,6 +276,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/_authenticated/events'
     | '/_authenticated/groups'
+    | '/_authenticated/manage'
     | '/_authenticated/messages'
     | '/_authenticated/notifications'
     | '/_authenticated/profile'
@@ -227,6 +285,10 @@ export interface FileRouteTypes {
     | '/_authenticated/events/$eventId'
     | '/_authenticated/events/new'
     | '/_authenticated/groups/$groupId'
+    | '/_authenticated/manage/dashboard'
+    | '/_authenticated/manage/members'
+    | '/_authenticated/manage/settings'
+    | '/_authenticated/manage/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -317,6 +379,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedMessagesRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/manage': {
+      id: '/_authenticated/manage'
+      path: '/manage'
+      fullPath: '/manage'
+      preLoaderRoute: typeof AuthenticatedManageRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/groups': {
       id: '/_authenticated/groups'
       path: '/groups'
@@ -337,6 +406,34 @@ declare module '@tanstack/react-router' {
       fullPath: '/dashboard'
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/manage/': {
+      id: '/_authenticated/manage/'
+      path: '/'
+      fullPath: '/manage/'
+      preLoaderRoute: typeof AuthenticatedManageIndexRouteImport
+      parentRoute: typeof AuthenticatedManageRoute
+    }
+    '/_authenticated/manage/settings': {
+      id: '/_authenticated/manage/settings'
+      path: '/settings'
+      fullPath: '/manage/settings'
+      preLoaderRoute: typeof AuthenticatedManageSettingsRouteImport
+      parentRoute: typeof AuthenticatedManageRoute
+    }
+    '/_authenticated/manage/members': {
+      id: '/_authenticated/manage/members'
+      path: '/members'
+      fullPath: '/manage/members'
+      preLoaderRoute: typeof AuthenticatedManageMembersRouteImport
+      parentRoute: typeof AuthenticatedManageRoute
+    }
+    '/_authenticated/manage/dashboard': {
+      id: '/_authenticated/manage/dashboard'
+      path: '/dashboard'
+      fullPath: '/manage/dashboard'
+      preLoaderRoute: typeof AuthenticatedManageDashboardRouteImport
+      parentRoute: typeof AuthenticatedManageRoute
     }
     '/_authenticated/groups/$groupId': {
       id: '/_authenticated/groups/$groupId'
@@ -386,10 +483,28 @@ const AuthenticatedGroupsRouteChildren: AuthenticatedGroupsRouteChildren = {
 const AuthenticatedGroupsRouteWithChildren =
   AuthenticatedGroupsRoute._addFileChildren(AuthenticatedGroupsRouteChildren)
 
+interface AuthenticatedManageRouteChildren {
+  AuthenticatedManageDashboardRoute: typeof AuthenticatedManageDashboardRoute
+  AuthenticatedManageMembersRoute: typeof AuthenticatedManageMembersRoute
+  AuthenticatedManageSettingsRoute: typeof AuthenticatedManageSettingsRoute
+  AuthenticatedManageIndexRoute: typeof AuthenticatedManageIndexRoute
+}
+
+const AuthenticatedManageRouteChildren: AuthenticatedManageRouteChildren = {
+  AuthenticatedManageDashboardRoute: AuthenticatedManageDashboardRoute,
+  AuthenticatedManageMembersRoute: AuthenticatedManageMembersRoute,
+  AuthenticatedManageSettingsRoute: AuthenticatedManageSettingsRoute,
+  AuthenticatedManageIndexRoute: AuthenticatedManageIndexRoute,
+}
+
+const AuthenticatedManageRouteWithChildren =
+  AuthenticatedManageRoute._addFileChildren(AuthenticatedManageRouteChildren)
+
 interface AuthenticatedRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedEventsRoute: typeof AuthenticatedEventsRouteWithChildren
   AuthenticatedGroupsRoute: typeof AuthenticatedGroupsRouteWithChildren
+  AuthenticatedManageRoute: typeof AuthenticatedManageRouteWithChildren
   AuthenticatedMessagesRoute: typeof AuthenticatedMessagesRoute
   AuthenticatedNotificationsRoute: typeof AuthenticatedNotificationsRoute
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
@@ -401,6 +516,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedEventsRoute: AuthenticatedEventsRouteWithChildren,
   AuthenticatedGroupsRoute: AuthenticatedGroupsRouteWithChildren,
+  AuthenticatedManageRoute: AuthenticatedManageRouteWithChildren,
   AuthenticatedMessagesRoute: AuthenticatedMessagesRoute,
   AuthenticatedNotificationsRoute: AuthenticatedNotificationsRoute,
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
