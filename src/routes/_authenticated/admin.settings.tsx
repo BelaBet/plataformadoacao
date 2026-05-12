@@ -10,7 +10,7 @@ import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/admin/settings")({
   component: SettingsPage,
-  head: () => ({ meta: [{ title: "ERP — Plataforma" }] }),
+  head: () => ({ meta: [{ title: "Painel — Plataforma" }] }),
 });
 
 function SettingsPage() {

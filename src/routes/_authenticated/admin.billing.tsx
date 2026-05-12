@@ -8,8 +8,17 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export const Route = createFileRoute("/_authenticated/admin/billing")({
   component: BillingPage,
-  head: () => ({ meta: [{ title: "ERP — Billing SaaS" }] }),
+  head: () => ({ meta: [{ title: "Painel — Billing" }] }),
 });
+
+const SUB_STATUS: Record<string, string> = {
+  trialing: "Em teste", active: "Ativa", past_due: "Em atraso",
+  canceled: "Cancelada", paused: "Pausada", incomplete: "Incompleta",
+};
+const INV_STATUS: Record<string, string> = {
+  pending: "Pendente", paid: "Paga", overdue: "Em atraso",
+  canceled: "Cancelada", refunded: "Reembolsada",
+};
 
 const fmtBRL = (n: number) => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
@@ -53,8 +62,8 @@ function BillingPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="font-display text-3xl">Billing SaaS</h1>
-        <p className="text-sm text-muted-foreground">Planos, assinaturas e faturas das igrejas. Separado das doações.</p>
+        <h1 className="font-display text-3xl">Billing</h1>
+        <p className="text-sm text-muted-foreground">Planos, assinaturas e faturas das igrejas.</p>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-3">
@@ -107,7 +116,7 @@ function BillingPage() {
                   <TableRow key={s.id}>
                     <TableCell>{(s.tenants as { name?: string } | null)?.name ?? "—"}</TableCell>
                     <TableCell>{(s.subscription_plans as { name?: string } | null)?.name ?? "—"}</TableCell>
-                    <TableCell><Badge variant={s.status === "active" ? "secondary" : s.status === "past_due" ? "destructive" : "outline"}>{s.status}</Badge></TableCell>
+                    <TableCell><Badge variant={s.status === "active" ? "secondary" : s.status === "past_due" ? "destructive" : "outline"}>{SUB_STATUS[s.status] ?? s.status}</Badge></TableCell>
                     <TableCell className="text-xs">{new Date(s.current_period_end).toLocaleDateString("pt-BR")}</TableCell>
                   </TableRow>
                 ))}
@@ -128,7 +137,7 @@ function BillingPage() {
                   <TableRow key={i.id}>
                     <TableCell>{(i.tenants as { name?: string } | null)?.name ?? "—"}</TableCell>
                     <TableCell className="text-right">{fmtBRL(Number(i.amount))}</TableCell>
-                    <TableCell><Badge variant={i.status === "paid" ? "secondary" : i.status === "overdue" ? "destructive" : "outline"}>{i.status}</Badge></TableCell>
+                    <TableCell><Badge variant={i.status === "paid" ? "secondary" : i.status === "overdue" ? "destructive" : "outline"}>{INV_STATUS[i.status] ?? i.status}</Badge></TableCell>
                     <TableCell className="text-xs">{new Date(i.period_start).toLocaleDateString("pt-BR")} → {new Date(i.period_end).toLocaleDateString("pt-BR")}</TableCell>
                     <TableCell className="text-xs">{i.due_date ? new Date(i.due_date).toLocaleDateString("pt-BR") : "—"}</TableCell>
                   </TableRow>

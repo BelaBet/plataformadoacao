@@ -1,12 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Card } from "@/components/ui/card";
+import { KpiCard } from "@/components/kpi-card";
 import { Building2, Users, Heart, TrendingUp, Calendar, Megaphone, DollarSign, Wallet } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin/dashboard")({
   component: AdminDashboard,
-  head: () => ({ meta: [{ title: "ERP — Dashboard" }] }),
+  head: () => ({ meta: [{ title: "Painel — Visão geral" }] }),
 });
 
 const fmtBRL = (n: number) =>
@@ -64,13 +64,7 @@ function AdminDashboard() {
       </div>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {kpis.map((k) => (
-          <Card key={k.label} className="p-5">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">{k.label}</span>
-              <k.icon className="h-4 w-4 text-amber-500" />
-            </div>
-            <div className="mt-3 font-display text-2xl">{k.value}</div>
-          </Card>
+          <KpiCard key={k.label} icon={k.icon} label={k.label} value={k.value} />
         ))}
       </div>
     </div>
