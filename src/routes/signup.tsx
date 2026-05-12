@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { translateError } from "@/lib/translate-error";
 import { z } from "zod";
 
 export const Route = createFileRoute("/signup")({
@@ -60,7 +61,7 @@ function SignupPage() {
       },
     });
     setLoading(false);
-    if (error) return toast.error(error.message);
+    if (error) return toast.error(translateError(error));
     setSubmitted(true);
   };
 

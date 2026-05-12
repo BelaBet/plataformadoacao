@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { translateError } from "@/lib/translate-error";
 
 export const Route = createFileRoute("/reset-password")({
   component: ResetPasswordPage,
@@ -22,7 +23,7 @@ function ResetPasswordPage() {
     setLoading(true);
     const { error } = await supabase.auth.updateUser({ password });
     setLoading(false);
-    if (error) return toast.error(error.message);
+    if (error) return toast.error(translateError(error));
     toast.success("Senha atualizada!");
     navigate({ to: "/dashboard" });
   };

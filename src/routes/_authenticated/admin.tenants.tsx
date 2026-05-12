@@ -17,6 +17,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { EmptyRow, LoadingRow } from "@/components/empty-row";
 import { Eye, Pause, Play, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { translateError } from "@/lib/translate-error";
 
 export const Route = createFileRoute("/_authenticated/admin/tenants")({
   component: TenantsPage,
@@ -63,7 +64,7 @@ function TenantsPage() {
 
   const toggleActive = async (id: string, current: boolean) => {
     const { error } = await supabase.from("tenants").update({ active: !current }).eq("id", id);
-    if (error) toast.error(error.message);
+    if (error) toast.error(translateError(error));
     else { toast.success(current ? "Igreja suspensa" : "Igreja reativada"); qc.invalidateQueries({ queryKey: ["admin-tenants"] }); }
   };
 
@@ -74,7 +75,7 @@ function TenantsPage() {
       deleted_at: new Date().toISOString(), deleted_by: u.user?.id, active: false,
     }).eq("id", deleteId);
     setDeleteId(null);
-    if (error) toast.error(error.message);
+    if (error) toast.error(translateError(error));
     else { toast.success("Igreja excluída"); qc.invalidateQueries({ queryKey: ["admin-tenants"] }); }
   };
 
@@ -86,7 +87,7 @@ function TenantsPage() {
       setImperId(null); setImperReason("");
       nav({ to: "/manage/dashboard" });
     } catch (e) {
-      toast.error((e as Error).message);
+      toast.error(translateError(e));
     }
   };
 

@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
+import { translateError } from "@/lib/translate-error";
 
 export const Route = createFileRoute("/_authenticated/admin/settings")({
   component: SettingsPage,
@@ -44,7 +45,7 @@ function SettingsPage() {
       signup_open: row.signup_open,
       updated_at: new Date().toISOString(),
     }).eq("id", row.id!);
-    if (error) toast.error(error.message);
+    if (error) toast.error(translateError(error));
     else toast.success("Configurações salvas");
   };
 

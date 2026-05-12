@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { translateError } from "@/lib/translate-error";
 import { Download, ShieldAlert } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/profile")({
@@ -26,7 +27,7 @@ function ProfilePage() {
       .update({ full_name: fullName, phone })
       .eq("id", user!.id);
     setSaving(false);
-    if (error) return toast.error(error.message);
+    if (error) return toast.error(translateError(error));
     toast.success("Perfil atualizado.");
     refresh();
   };
@@ -52,7 +53,7 @@ function ProfilePage() {
       .from("profiles")
       .update({ full_name: "Membro anônimo", phone: null, email: null, avatar_url: null })
       .eq("id", user!.id);
-    if (error) return toast.error(error.message);
+    if (error) return toast.error(translateError(error));
     toast.success("Dados anonimizados.");
     await signOut();
   };

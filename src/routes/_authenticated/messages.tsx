@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Megaphone } from "lucide-react";
 import { toast } from "sonner";
+import { translateError } from "@/lib/translate-error";
 
 export const Route = createFileRoute("/_authenticated/messages")({
   component: MessagesPage,
@@ -61,7 +62,7 @@ function MessagesPage() {
       }
       setTitle(""); setContent("");
     } catch (err) {
-      toast.error((err as Error).message);
+      toast.error(translateError(err));
     } finally {
       setSending(false);
     }
