@@ -15,7 +15,7 @@ import {
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { MoreVertical, Search, UserCheck, UserX, Users, Send, Eye } from "lucide-react";
+import { MoreVertical, Search, UserCheck, UserX, Send, Eye } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { useAuth } from "@/lib/auth-context";
@@ -29,39 +29,29 @@ type Profile = {
   status: "pending" | "approved" | "blocked"; created_at: string; tenant_id: string;
 };
 type Donation = { profile_id: string; amount: number; created_at: string };
-type Group = { id: string; name: string };
 
 function MembersPage() {
   const { profile: me } = useAuth();
   const [members, setMembers] = useState<Profile[]>([]);
   const [donations, setDonations] = useState<Donation[]>([]);
-  const [groups, setGroups] = useState<Group[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [groupFilter, setGroupFilter] = useState<string>("all");
-  const [groupMembers, setGroupMembers] = useState<{ group_id: string; profile_id: string }[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [detailId, setDetailId] = useState<string | null>(null);
 
   const [bulkMsgOpen, setBulkMsgOpen] = useState(false);
   const [bulkMsg, setBulkMsg] = useState("");
   const [bulkMsgTitle, setBulkMsgTitle] = useState("");
-  const [addToGroupOpen, setAddToGroupOpen] = useState(false);
-  const [targetGroupId, setTargetGroupId] = useState("");
 
   const load = async () => {
     setLoading(true);
-    const [{ data: ps }, { data: ds }, { data: gs }, { data: gms }] = await Promise.all([
+    const [{ data: ps }, { data: ds }] = await Promise.all([
       supabase.from("profiles").select("id, full_name, email, phone, status, created_at, tenant_id"),
       supabase.from("donations").select("profile_id, amount, created_at"),
-      supabase.from("groups").select("id, name"),
-      supabase.from("group_members").select("group_id, profile_id"),
     ]);
     setMembers((ps ?? []) as Profile[]);
     setDonations((ds ?? []) as Donation[]);
-    setGroups((gs ?? []) as Group[]);
-    setGroupMembers((gms ?? []) as never);
     setLoading(false);
   };
 
@@ -76,14 +66,13 @@ function MembersPage() {
   const filtered = useMemo(() => {
     return members.filter((m) => {
       if (statusFilter !== "all" && m.status !== statusFilter) return false;
-      if (groupFilter !== "all" && !groupMembers.some((gm) => gm.group_id === groupFilter && gm.profile_id === m.id)) return false;
       if (search) {
         const q = search.toLowerCase();
         if (!`${m.full_name ?? ""} ${m.email ?? ""} ${m.phone ?? ""}`.toLowerCase().includes(q)) return false;
       }
       return true;
     });
-  }, [members, statusFilter, groupFilter, groupMembers, search]);
+  }, [members, statusFilter, search]);
 
   const toggleAll = (v: boolean) => setSelected(v ? new Set(filtered.map((m) => m.id)) : new Set());
   const toggleOne = (id: string, v: boolean) => {
@@ -153,10 +142,6 @@ function MembersPage() {
             <option value="approved">Aprovado</option>
             <option value="blocked">Bloqueado</option>
           </select>
-          <select className="rounded-md border bg-background px-3 py-2 text-sm" value={groupFilter} onChange={(e) => setGroupFilter(e.target.value)}>
-            <option value="all">Todos os grupos</option>
-            {groups.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
-          </select>
         </div>
 
         {selected.size > 0 && (
@@ -167,9 +152,6 @@ function MembersPage() {
             </Button>
             <Button size="sm" variant="outline" onClick={() => updateStatus(Array.from(selected), "blocked")}>
               <UserX className="h-4 w-4" /> Bloquear
-            </Button>
-            <Button size="sm" variant="outline" onClick={() => setAddToGroupOpen(true)}>
-              <Users className="h-4 w-4" /> Adicionar ao grupo
             </Button>
             <Button size="sm" variant="outline" onClick={() => setBulkMsgOpen(true)}>
               <Send className="h-4 w-4" /> Enviar mensagem
@@ -230,10 +212,6 @@ function MembersPage() {
                             <UserX className="h-4 w-4" /> Bloquear
                           </DropdownMenuItem>
                         )}
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => { setSelected(new Set([m.id])); setAddToGroupOpen(true); }}>
-                          <Users className="h-4 w-4" /> Adicionar ao grupo
-                        </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
