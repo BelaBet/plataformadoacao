@@ -54,11 +54,7 @@ function GroupsPage() {
           <h1 className="font-display text-3xl">Grupos</h1>
           <p className="text-sm text-muted-foreground">Comunidades dentro do seu tenant</p>
         </div>
-        {isStaff && (
-          <Button onClick={() => setShowForm(!showForm)}>
-            <Plus className="h-4 w-4" /> Novo grupo
-          </Button>
-        )}
+      </div>
       </div>
 
       {showForm && isStaff && (
