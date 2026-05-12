@@ -89,16 +89,6 @@ function MembersPage() {
     load();
   };
 
-  const bulkAddToGroup = async () => {
-    if (!targetGroupId || selected.size === 0) return;
-    const rows = Array.from(selected).map((pid) => ({ group_id: targetGroupId, profile_id: pid }));
-    const { error } = await supabase.from("group_members").upsert(rows, { onConflict: "group_id,profile_id", ignoreDuplicates: true });
-    if (error) return toast.error(error.message);
-    toast.success(`${selected.size} adicionado(s) ao grupo`);
-    setAddToGroupOpen(false);
-    setSelected(new Set());
-    load();
-  };
 
   const sendBulkMessage = async () => {
     if (!bulkMsg.trim() || !me?.tenant_id || selected.size === 0) return;
@@ -229,16 +219,6 @@ function MembersPage() {
         donations={donations.filter((d) => d.profile_id === detailId)}
       />
 
-      <Dialog open={addToGroupOpen} onOpenChange={setAddToGroupOpen}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>Adicionar ao grupo</DialogTitle></DialogHeader>
-          <select className="w-full rounded-md border bg-background px-3 py-2 text-sm" value={targetGroupId} onChange={(e) => setTargetGroupId(e.target.value)}>
-            <option value="">Selecione um grupo</option>
-            {groups.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
-          </select>
-          <Button onClick={bulkAddToGroup} disabled={!targetGroupId}>Adicionar {selected.size}</Button>
-        </DialogContent>
-      </Dialog>
 
       <Dialog open={bulkMsgOpen} onOpenChange={setBulkMsgOpen}>
         <DialogContent>
