@@ -64,9 +64,8 @@ function Dashboard() {
       <div className="mt-10 rounded-2xl border bg-card p-6">
         <h2 className="font-display text-xl">Próximos passos</h2>
         <ul className="mt-3 list-inside list-disc space-y-1 text-sm text-muted-foreground">
-          <li>Confira os <strong>eventos</strong> abertos para inscrição.</li>
           <li>Atualize seu <strong>perfil</strong> e preferências de privacidade.</li>
-          {isStaff && <li>Crie um novo evento ou campanha de doação.</li>}
+          {isStaff && <li>Crie uma nova campanha de doação.</li>}
         </ul>
       </div>
     </div>
