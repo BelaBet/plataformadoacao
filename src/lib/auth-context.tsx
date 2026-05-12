@@ -68,13 +68,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => {
+    const { data: sub } = supabase.auth.onAuthStateChange((event, s) => {
       setSession(s);
       setUser(s?.user ?? null);
       if (s?.user) {
         setTimeout(() => loadProfile(s.user.id), 0);
       } else {
         setProfile(null); setRoles([]); setPlatformRoles([]);
+      }
+      // Redirect to password reset page when user clicks recovery link
+      if (event === "PASSWORD_RECOVERY" && typeof window !== "undefined") {
+        if (window.location.pathname !== "/redefinir-senha") {
+          window.location.assign("/redefinir-senha");
+        }
       }
     });
     supabase.auth.getSession().then(({ data: { session: s } }) => {
