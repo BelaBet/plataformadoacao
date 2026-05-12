@@ -77,7 +77,7 @@ function AuthLayout() {
           <nav className="hidden items-center gap-1 md:flex">
             <Button asChild variant="ghost" size="sm"><Link to="/dashboard">Painel</Link></Button>
             <Button asChild variant="ghost" size="sm"><Link to="/events">Eventos</Link></Button>
-            <Button asChild variant="ghost" size="sm"><Link to="/groups">Grupos</Link></Button>
+            
             <Button asChild variant="ghost" size="sm"><Link to="/messages">Mensagens</Link></Button>
             <Button asChild variant="ghost" size="sm"><Link to="/notifications"><Bell className="h-4 w-4" /></Link></Button>
             {isStaff && <Button asChild variant="default" size="sm"><Link to="/manage/dashboard">Gestão</Link></Button>}
@@ -97,11 +97,10 @@ function AuthLayout() {
       </main>
 
       {/* Mobile bottom nav */}
-      <nav className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 border-t bg-card md:hidden">
+      <nav className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-4 border-t bg-card md:hidden">
         {[
           { to: "/dashboard", label: "Painel", icon: LayoutDashboard },
           { to: "/events", label: "Eventos", icon: Calendar },
-          { to: "/groups", label: "Grupos", icon: Users },
           { to: "/notifications", label: "Avisos", icon: Bell },
           { to: "/profile", label: "Perfil", icon: User },
         ].map((i) => (
