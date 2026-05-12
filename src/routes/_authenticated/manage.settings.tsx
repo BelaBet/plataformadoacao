@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+import { translateError } from "@/lib/translate-error";
 import { Loader2 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/manage/settings")({
@@ -61,7 +62,7 @@ function SettingsPage() {
       pix_key: row.pix_key,
     }).eq("id", row.id);
     setSaving(false);
-    if (error) return toast.error(error.message);
+    if (error) return toast.error(translateError(error));
     toast.success("Configurações salvas");
     refresh();
   };

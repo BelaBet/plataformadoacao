@@ -19,6 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { EmptyRow, LoadingRow } from "@/components/empty-row";
 import { MoreVertical, Search, UserCheck, UserX, Send, Eye } from "lucide-react";
 import { toast } from "sonner";
+import { translateError } from "@/lib/translate-error";
 import { format } from "date-fns";
 import { useAuth } from "@/lib/auth-context";
 
@@ -85,7 +86,7 @@ function MembersPage() {
 
   const updateStatus = async (ids: string[], status: Profile["status"]) => {
     const { error } = await supabase.from("profiles").update({ status }).in("id", ids);
-    if (error) return toast.error(error.message);
+    if (error) return toast.error(translateError(error));
     toast.success(`${ids.length} atualizado(s)`);
     setSelected(new Set());
     load();
@@ -103,7 +104,7 @@ function MembersPage() {
         content: bulkMsg, status: "sent" as const, sent_at: sentAt,
       }))
     );
-    if (mErr) return toast.error(mErr.message);
+    if (mErr) return toast.error(translateError(mErr));
     const { error: nErr } = await supabase.from("notifications").insert(
       ids.map((pid) => ({
         tenant_id: me.tenant_id, profile_id: pid,
@@ -111,7 +112,7 @@ function MembersPage() {
         body: bulkMsg.slice(0, 200), type: "direct",
       }))
     );
-    if (nErr) return toast.error(nErr.message);
+    if (nErr) return toast.error(translateError(nErr));
     toast.success(`Enviado para ${ids.length}`);
     setBulkMsgOpen(false); setBulkMsg(""); setBulkMsgTitle(""); setSelected(new Set());
   };

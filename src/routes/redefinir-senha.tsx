@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { translateError } from "@/lib/translate-error";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 
 export const Route = createFileRoute("/redefinir-senha")({
@@ -29,7 +30,7 @@ function RedefinirSenhaPage() {
     const { error } = await supabase.auth.updateUser({ password: novaSenha });
     setLoading(false);
 
-    if (error) return toast.error(error.message);
+    if (error) return toast.error(translateError(error));
     toast.success("Senha redefinida com sucesso!");
     await supabase.auth.signOut();
     navigate({ to: "/login" });

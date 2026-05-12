@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { translateError } from "@/lib/translate-error";
 
 export const Route = createFileRoute("/forgot-password")({
   component: ForgotPasswordPage,
@@ -33,7 +34,7 @@ function ForgotPasswordPage() {
       redirectTo: `${appOrigin}/redefinir-senha`,
     });
     setLoading(false);
-    if (error) return toast.error(error.message);
+    if (error) return toast.error(translateError(error));
     setSent(true);
   };
 
