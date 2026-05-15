@@ -783,7 +783,7 @@ function ChurchPage() {
               />
             ) : (
               <div
-                className="mx-auto grid place-items-center rounded-full w-16 h-16 sm:w-24 sm:h-16 text-xl sm:text-3xl font-extrabold"
+                className="mx-auto grid place-items-center rounded-full w-16 h-16 sm:w-24 sm:h-24 text-xl sm:text-3xl font-extrabold"
                 style={{
                   background: "#fff",
                   color: primary,
