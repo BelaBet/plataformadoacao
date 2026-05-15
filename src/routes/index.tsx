@@ -805,22 +805,39 @@ function ChurchPage() {
       </section>
 
       {/* ── PAYMENTS HUB SECTION (fintech quick actions) ───────────────── */}
-      <section style={{ padding: "80px 24px", maxWidth: 1100, margin: "0 auto" }}>
-        <div className="fade-up" style={{ textAlign: "center", marginBottom: 36 }}>
-          <span style={{ fontSize: 12, letterSpacing: 3, color: accent, fontWeight: 600 }}>
+      <section className="mx-auto max-w-[1100px] px-6 pt-6 pb-8 sm:py-20">
+        <div className="fade-up text-center mb-4 sm:mb-9">
+          <span
+            className="font-semibold"
+            style={{
+              fontSize: "clamp(0.6rem, 2vw, 0.75rem)",
+              letterSpacing: "0.18em",
+              color: accent,
+            }}
+          >
             ✦ CONTRIBUA COM A OBRA
           </span>
           <h2
             style={{
               fontFamily: "'Playfair Display', serif",
-              fontSize: "clamp(1.8rem, 4vw, 2.5rem)",
-              margin: "12px 0 8px",
+              fontSize: "clamp(1.15rem, 4.5vw, 2.5rem)",
+              margin: "4px 0 2px",
+              lineHeight: 1.15,
               color: primary,
             }}
           >
             Escolha como deseja contribuir
           </h2>
-          <p style={{ color: "#666", margin: "0 auto", maxWidth: 620 }}>
+          <p
+            className="mx-auto"
+            style={{
+              color: "#666",
+              fontSize: "clamp(0.78rem, 2.2vw, 1rem)",
+              lineHeight: 1.4,
+              maxWidth: 620,
+              margin: "4px auto 0",
+            }}
+          >
             Pagamentos rápidos, seguros e sem complicação.
           </p>
         </div>
@@ -830,22 +847,11 @@ function ChurchPage() {
         </div>
 
         <div
-          className="fade-up-3"
-          style={{
-            marginTop: 32,
-            padding: 16,
-            background: `${accent}11`,
-            borderRadius: 12,
-            display: "flex",
-            gap: 12,
-            alignItems: "flex-start",
-            maxWidth: 720,
-            marginLeft: "auto",
-            marginRight: "auto",
-          }}
+          className="fade-up-3 mx-auto mt-4 sm:mt-8 flex items-start gap-3 rounded-xl p-3 sm:p-4 max-w-[720px]"
+          style={{ background: `${accent}11` }}
         >
-          <span style={{ fontSize: 20 }}>🔒</span>
-          <p style={{ margin: 0, fontSize: 13, color: "#555", lineHeight: 1.5 }}>
+          <span style={{ fontSize: 18 }}>🔒</span>
+          <p style={{ margin: 0, fontSize: 12, color: "#555", lineHeight: 1.45 }}>
             Todas as transações são processadas com criptografia e segurança bancária.
             Após sua doação, você receberá uma confirmação no WhatsApp ou SMS cadastrado.
           </p>
