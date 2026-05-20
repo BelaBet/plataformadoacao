@@ -652,6 +652,7 @@ function MaisDialog({ open, onClose, onPick }: { open: boolean; onClose: () => v
 // ── MAIN PAGE ─────────────────────────────────────────────────────────────────
 function ChurchPage() {
   const [copied, setCopied] = useState(false);
+  const [contribOpen, setContribOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const primary = CHURCH.primaryColor;
   const accent = CHURCH.accentColor;
