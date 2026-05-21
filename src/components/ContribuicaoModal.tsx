@@ -138,7 +138,7 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props)
           </button>
         </div>
 
-        <div className="mt-5 flex items-center justify-center gap-1.5 text-xs text-[#6B7280]">
+        <div className="relative z-0 mt-5 flex items-center justify-center gap-1.5 text-xs text-[#6B7280]">
           <Lock className="h-3.5 w-3.5" />
           Pagamento 100% seguro
         </div>
