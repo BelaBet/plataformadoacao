@@ -65,11 +65,11 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props)
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/60 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
       onClick={onClose}
     >
       <div
-        className="relative my-auto flex w-full max-w-md flex-col rounded-2xl bg-white p-6 shadow-2xl sm:p-8"
+        className="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl sm:p-8"
         onClick={(e) => e.stopPropagation()}
       >
         <button
@@ -138,7 +138,7 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props)
           </button>
         </div>
 
-        <div className="relative z-0 mt-5 flex items-center justify-center gap-1.5 text-xs text-[#6B7280]">
+        <div className="mt-5 flex items-center justify-center gap-1.5 text-xs text-[#6B7280]">
           <Lock className="h-3.5 w-3.5" />
           Pagamento 100% seguro
         </div>
