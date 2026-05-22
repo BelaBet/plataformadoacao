@@ -163,7 +163,7 @@ export const createPixPayment = createServerFn({ method: "POST" })
           payment_method: "pix",
           pix: {
             expires_in: expiresIn,
-            additional_information: [{ name: "Contribuição", value: data.customerName }],
+            additional_information: [{ name: "Contribuição", value: data.customerName ?? "Anônimo" }],
           },
         },
       ],
