@@ -92,6 +92,8 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props)
       setValue("25");
       setBoleto(null);
       setCopied(false);
+      setSubmitting(false);
+      setError(null);
     }
   }, [isOpen]);
 
@@ -115,18 +117,68 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props)
     setSelected(PRESETS.includes(num) ? num : "custom");
   };
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     const num = Number(value);
     if (!num || num <= 0) return;
+    setError(null);
+
     if (isBoleto) {
-      setBoleto({
-        code: generateBoletoCode(num),
-        due: addBusinessDays(new Date(), 3),
-        valor: num,
-      });
-      onConfirm?.(num);
+      if (!user || !tenant) {
+        setError("Você precisa estar logado para gerar um boleto.");
+        return;
+      }
+
+      setSubmitting(true);
+      const code = generateBoletoCode(num);
+      const due = addBusinessDays(new Date(), 3);
+
+      try {
+        // 1. Create pending payment, with boleto code as gateway_id
+        const { data: payment, error: payErr } = await supabase
+          .from("payments")
+          .insert({
+            tenant_id: tenant.id,
+            profile_id: user.id,
+            amount: num,
+            method: "boleto",
+            status: "pending",
+            reference_type: "donation",
+            gateway_id: code.replace(/\s|\./g, ""),
+          })
+          .select("id")
+          .single();
+        if (payErr) throw payErr;
+
+        // 2. Create donation linked to the payment
+        const { data: donation, error: donErr } = await supabase
+          .from("donations")
+          .insert({
+            tenant_id: tenant.id,
+            profile_id: user.id,
+            amount: num,
+            payment_id: payment.id,
+          })
+          .select("id")
+          .single();
+        if (donErr) throw donErr;
+
+        // 3. Backfill reference_id on the payment now that donation exists
+        await supabase
+          .from("payments")
+          .update({ reference_id: donation.id })
+          .eq("id", payment.id);
+
+        setBoleto({ code, due, valor: num, paymentId: payment.id, donationId: donation.id });
+        onConfirm?.(num);
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : "Falha ao gerar boleto.";
+        setError(msg);
+      } finally {
+        setSubmitting(false);
+      }
       return;
     }
+
     onConfirm?.(num);
     onClose();
   };
