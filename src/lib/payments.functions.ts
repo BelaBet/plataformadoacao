@@ -146,14 +146,8 @@ export const createPixPayment = createServerFn({ method: "POST" })
     const expiresIn = 60 * 60; // 1h
 
     const json = await pagarmeFetch("/orders", {
-      items: [{ amount: amountCents, description: "Contribuição", quantity: 1 }],
-      customer: {
-        name: data.customerName,
-        email: data.customerEmail,
-        type: "individual",
-        document: data.customerDocument.replace(/\D/g, ""),
-        document_type: "CPF",
-      },
+      items: buildItems(amountCents),
+      customer: buildCustomer(data),
       payments: [
         {
           payment_method: "pix",
