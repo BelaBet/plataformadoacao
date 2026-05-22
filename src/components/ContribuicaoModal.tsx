@@ -355,11 +355,8 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props)
               </div>
             </div>
 
-            <div className="mt-4">
-              <div className="text-xs font-medium uppercase tracking-wide text-[#6B7280]">
-                Linha digitável
-              </div>
             <div className="mt-5 rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] p-4">
+
               <div className="text-xs font-medium uppercase tracking-wide text-[#6B7280]">
                 Instituição beneficiária
               </div>
