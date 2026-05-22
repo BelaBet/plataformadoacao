@@ -82,6 +82,7 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props)
     valor: number;
     paymentId?: string;
     donationId?: string;
+    pdfUrl?: string;
   } | null>(null);
   const [copied, setCopied] = useState(false);
   const [submitting, setSubmitting] = useState(false);
