@@ -418,19 +418,12 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props)
               Pagamento 100% seguro
             </div>
 
-            {error && (
-              <div className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
-                {error}
-              </div>
-            )}
-
             <button
               onClick={handleConfirm}
-              className="mt-4 flex h-[52px] w-full items-center justify-center gap-2 rounded-full bg-[#7C3AED] text-base font-semibold text-white transition hover:bg-[#6D28D9] disabled:opacity-50"
-              disabled={!Number(value) || submitting}
+              className="mt-4 h-[52px] w-full rounded-full bg-[#7C3AED] text-base font-semibold text-white transition hover:bg-[#6D28D9] disabled:opacity-50"
+              disabled={!Number(value)}
             >
-              {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
-              {submitting ? "Gerando..." : copy.cta}
+              {copy.cta}
             </button>
           </>
         )}
