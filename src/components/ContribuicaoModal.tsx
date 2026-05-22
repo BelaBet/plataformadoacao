@@ -751,7 +751,7 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props)
               </button>
             </div>
 
-            {isBoleto && (
+            {needsPayer && (
               <div className="mt-5 space-y-2.5">
                 <div>
                   <label className="text-xs font-medium text-[#6B7280]">Nome completo</label>
@@ -783,6 +783,133 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props)
                     value={payerCpf}
                     onChange={(e) => setPayerCpf(formatCPF(e.target.value))}
                     placeholder="000.000.000-00"
+                    className="mt-1 h-11 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm text-[#111827] outline-none focus:border-[#7C3AED]"
+                  />
+                </div>
+              </div>
+            )}
+
+            {isCard && (
+              <div className="mt-4 space-y-2.5 border-t border-[#E5E7EB] pt-4">
+                <div className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">
+                  Dados do cartão
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-[#6B7280]">Número do cartão</label>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={cardNumber}
+                    onChange={(e) => {
+                      const d = e.target.value.replace(/\D/g, "").slice(0, 19);
+                      setCardNumber(d.replace(/(\d{4})(?=\d)/g, "$1 "));
+                    }}
+                    placeholder="0000 0000 0000 0000"
+                    className="mt-1 h-11 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 font-mono text-sm text-[#111827] outline-none focus:border-[#7C3AED]"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-[#6B7280]">Nome impresso no cartão</label>
+                  <input
+                    type="text"
+                    value={cardHolder}
+                    onChange={(e) => setCardHolder(e.target.value.toUpperCase())}
+                    maxLength={120}
+                    placeholder="NOME COMO NO CARTÃO"
+                    className="mt-1 h-11 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm uppercase text-[#111827] outline-none focus:border-[#7C3AED]"
+                  />
+                </div>
+                <div className="grid grid-cols-3 gap-2.5">
+                  <div className="col-span-2">
+                    <label className="text-xs font-medium text-[#6B7280]">Validade</label>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      value={cardExp}
+                      onChange={(e) => {
+                        const d = e.target.value.replace(/\D/g, "").slice(0, 4);
+                        setCardExp(d.length >= 3 ? `${d.slice(0, 2)}/${d.slice(2)}` : d);
+                      }}
+                      placeholder="MM/AA"
+                      className="mt-1 h-11 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 font-mono text-sm text-[#111827] outline-none focus:border-[#7C3AED]"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-[#6B7280]">CVV</label>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      value={cardCvv}
+                      onChange={(e) => setCardCvv(e.target.value.replace(/\D/g, "").slice(0, 4))}
+                      placeholder="123"
+                      className="mt-1 h-11 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 font-mono text-sm text-[#111827] outline-none focus:border-[#7C3AED]"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-[#6B7280]">Parcelas</label>
+                  <select
+                    value={installments}
+                    onChange={(e) => setInstallments(Number(e.target.value))}
+                    className="mt-1 h-11 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm text-[#111827] outline-none focus:border-[#7C3AED]"
+                  >
+                    {Array.from({ length: 12 }, (_, i) => i + 1).map((n) => (
+                      <option key={n} value={n}>
+                        {n}x de R$ {(Number(value || 0) / n).toFixed(2).replace(".", ",")}
+                        {n === 1 ? " (à vista)" : ""}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="pt-2 text-xs font-semibold uppercase tracking-wide text-[#6B7280]">
+                  Endereço de cobrança
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-[#6B7280]">Endereço (rua, nº)</label>
+                  <input
+                    type="text"
+                    value={addrLine}
+                    onChange={(e) => setAddrLine(e.target.value)}
+                    maxLength={200}
+                    placeholder="Rua Exemplo, 123"
+                    className="mt-1 h-11 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm text-[#111827] outline-none focus:border-[#7C3AED]"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-2.5">
+                  <div>
+                    <label className="text-xs font-medium text-[#6B7280]">CEP</label>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      value={addrZip}
+                      onChange={(e) => {
+                        const d = e.target.value.replace(/\D/g, "").slice(0, 8);
+                        setAddrZip(d.length > 5 ? `${d.slice(0, 5)}-${d.slice(5)}` : d);
+                      }}
+                      placeholder="00000-000"
+                      className="mt-1 h-11 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 font-mono text-sm text-[#111827] outline-none focus:border-[#7C3AED]"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-[#6B7280]">UF</label>
+                    <input
+                      type="text"
+                      value={addrState}
+                      onChange={(e) => setAddrState(e.target.value.toUpperCase().slice(0, 2))}
+                      placeholder="SP"
+                      className="mt-1 h-11 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm uppercase text-[#111827] outline-none focus:border-[#7C3AED]"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-[#6B7280]">Cidade</label>
+                  <input
+                    type="text"
+                    value={addrCity}
+                    onChange={(e) => setAddrCity(e.target.value)}
+                    maxLength={80}
+                    placeholder="São Paulo"
                     className="mt-1 h-11 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm text-[#111827] outline-none focus:border-[#7C3AED]"
                   />
                 </div>
