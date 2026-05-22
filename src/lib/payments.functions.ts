@@ -244,8 +244,8 @@ export const pollPixCharge = createServerFn({ method: "POST" })
     const orderStatus: string = json?.status ?? "";
     const chargeStatus: string = charge?.status ?? "";
 
-    const mapped: "pending" | "confirmed" | "failed" | null =
-      chargeStatus === "paid" ? "confirmed"
+    const mapped: "paid" | "failed" | null =
+      chargeStatus === "paid" ? "paid"
       : chargeStatus === "failed" || chargeStatus === "refused" ? "failed"
       : null;
 
@@ -253,7 +253,7 @@ export const pollPixCharge = createServerFn({ method: "POST" })
       const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
       await supabaseAdmin
         .from("payments")
-        .update({ status: mapped === "confirmed" ? "paid" : mapped })
+        .update({ status: mapped })
         .eq("gateway_id", data.gatewayId);
     }
 
