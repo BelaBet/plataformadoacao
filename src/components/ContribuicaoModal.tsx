@@ -94,12 +94,25 @@ function isValidCPF(raw: string) {
 
 export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props) {
   const { tenant } = useTenant();
-  const createPayment = useServerFn(createBoletoPayment);
+  const createBoleto = useServerFn(createBoletoPayment);
+  const createPix = useServerFn(createPixPayment);
+  const createCard = useServerFn(createCreditCardPayment);
   const [selected, setSelected] = useState<number | "custom">(25);
   const [value, setValue] = useState<string>("25");
   const [payerName, setPayerName] = useState("");
   const [payerEmail, setPayerEmail] = useState("");
   const [payerCpf, setPayerCpf] = useState("");
+  // Card-only fields
+  const [cardNumber, setCardNumber] = useState("");
+  const [cardHolder, setCardHolder] = useState("");
+  const [cardExp, setCardExp] = useState(""); // MM/AA
+  const [cardCvv, setCardCvv] = useState("");
+  const [installments, setInstallments] = useState(1);
+  const [addrLine, setAddrLine] = useState("");
+  const [addrZip, setAddrZip] = useState("");
+  const [addrCity, setAddrCity] = useState("");
+  const [addrState, setAddrState] = useState("");
+
   const [boleto, setBoleto] = useState<{
     code: string;
     due: Date;
@@ -108,12 +121,29 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props)
     donationId?: string;
     pdfUrl?: string;
   } | null>(null);
+  const [pix, setPix] = useState<{
+    code: string;
+    qrUrl: string;
+    valor: number;
+    expiresAt: Date;
+    paymentId?: string;
+  } | null>(null);
+  const [cardResult, setCardResult] = useState<{
+    status: "pending" | "confirmed" | "failed";
+    valor: number;
+    paymentId?: string;
+    message?: string | null;
+  } | null>(null);
+
   const [copied, setCopied] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const copy = METHOD_COPY[method?.key ?? "custom"];
   const isBoleto = method?.key === "boleto";
+  const isPix = method?.key === "pix";
+  const isCard = method?.key === "fatura";
+  const needsPayer = isBoleto || isPix || isCard;
 
   useEffect(() => {
     if (isOpen) {
@@ -122,7 +152,18 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props)
       setPayerName("");
       setPayerEmail("");
       setPayerCpf("");
+      setCardNumber("");
+      setCardHolder("");
+      setCardExp("");
+      setCardCvv("");
+      setInstallments(1);
+      setAddrLine("");
+      setAddrZip("");
+      setAddrCity("");
+      setAddrState("");
       setBoleto(null);
+      setPix(null);
+      setCardResult(null);
       setCopied(false);
       setSubmitting(false);
       setError(null);
@@ -149,53 +190,133 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props)
     setSelected(PRESETS.includes(num) ? num : "custom");
   };
 
+  const validatePayer = (): { name: string; email: string; cpf: string } | null => {
+    const name = payerName.trim();
+    const email = payerEmail.trim();
+    const cpfDigits = payerCpf.replace(/\D/g, "");
+    if (name.length < 2) {
+      setError("Informe o nome completo do pagador.");
+      return null;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setError("Informe um e-mail válido.");
+      return null;
+    }
+    if (!isValidCPF(cpfDigits)) {
+      setError("CPF inválido.");
+      return null;
+    }
+    return { name, email, cpf: cpfDigits };
+  };
+
   const handleConfirm = async (override?: number) => {
     const num = override ?? Number(value);
     if (!num || num <= 0) return;
-    if (isBoleto) {
-      if (!tenant?.id) {
-        setError("Não foi possível identificar a instituição.");
-        return;
-      }
-      const name = payerName.trim();
-      const email = payerEmail.trim();
-      const cpfDigits = payerCpf.replace(/\D/g, "");
-      if (name.length < 2) return setError("Informe o nome completo do pagador.");
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return setError("Informe um e-mail válido.");
-      if (!isValidCPF(cpfDigits)) return setError("CPF inválido.");
+    if (!needsPayer) {
+      onConfirm?.(num);
+      onClose();
+      return;
+    }
+    if (!tenant?.id) {
+      setError("Não foi possível identificar a instituição.");
+      return;
+    }
+    const payer = validatePayer();
+    if (!payer) return;
 
-      setSubmitting(true);
-      setError(null);
-      try {
-        const result = await createPayment({
+    setSubmitting(true);
+    setError(null);
+    try {
+      if (isBoleto) {
+        const result = await createBoleto({
           data: {
             tenantId: tenant.id,
             amount: num,
-            customerName: name,
-            customerEmail: email,
-            customerDocument: cpfDigits,
+            customerName: payer.name,
+            customerEmail: payer.email,
+            customerDocument: payer.cpf,
           },
         });
         const due = result.dueAt ? new Date(result.dueAt) : addBusinessDays(new Date(), 3);
-        const code = result.line || generateBoletoCode(num);
         setBoleto({
-          code,
+          code: result.line || generateBoletoCode(num),
           due,
           valor: num,
           paymentId: result.paymentId,
           donationId: result.donationId,
           pdfUrl: result.pdfUrl,
         });
-        onConfirm?.(num);
-      } catch (e) {
-        setError(e instanceof Error ? e.message : "Erro ao gerar boleto");
-      } finally {
-        setSubmitting(false);
+      } else if (isPix) {
+        const result = await createPix({
+          data: {
+            tenantId: tenant.id,
+            amount: num,
+            customerName: payer.name,
+            customerEmail: payer.email,
+            customerDocument: payer.cpf,
+          },
+        });
+        if (!result.qrCode) throw new Error("PIX não retornou código. Verifique a configuração da Pagar.me.");
+        setPix({
+          code: result.qrCode,
+          qrUrl: result.qrCodeUrl,
+          valor: num,
+          expiresAt: new Date(result.expiresAt),
+          paymentId: result.paymentId,
+        });
+      } else if (isCard) {
+        // Validate card
+        const digits = cardNumber.replace(/\s/g, "");
+        if (digits.length < 13) return setError("Número de cartão inválido.");
+        if (cardHolder.trim().length < 2) return setError("Informe o nome impresso no cartão.");
+        const [mm, yy] = cardExp.split("/").map((s) => s?.trim());
+        const expMonth = Number(mm);
+        const expYear = yy?.length === 2 ? 2000 + Number(yy) : Number(yy);
+        if (!expMonth || expMonth < 1 || expMonth > 12) return setError("Validade inválida (MM/AA).");
+        if (!expYear || expYear < new Date().getFullYear()) return setError("Validade inválida (MM/AA).");
+        if (cardCvv.length < 3) return setError("CVV inválido.");
+        if (addrLine.trim().length < 3) return setError("Informe o endereço de cobrança.");
+        if (addrZip.replace(/\D/g, "").length !== 8) return setError("CEP inválido.");
+        if (addrCity.trim().length < 2) return setError("Informe a cidade.");
+        if (addrState.trim().length !== 2) return setError("UF inválida (2 letras).");
+
+        const result = await createCard({
+          data: {
+            tenantId: tenant.id,
+            amount: num,
+            installments,
+            customerName: payer.name,
+            customerEmail: payer.email,
+            customerDocument: payer.cpf,
+            card: {
+              number: digits,
+              holderName: cardHolder.trim(),
+              expMonth,
+              expYear,
+              cvv: cardCvv,
+            },
+            billingAddress: {
+              line1: addrLine.trim(),
+              zipCode: addrZip,
+              city: addrCity.trim(),
+              state: addrState.trim().toUpperCase(),
+              country: "BR",
+            },
+          },
+        });
+        setCardResult({
+          status: result.status,
+          valor: num,
+          paymentId: result.paymentId,
+          message: result.acquirerMessage,
+        });
       }
-      return;
+      onConfirm?.(num);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Erro ao processar pagamento");
+    } finally {
+      setSubmitting(false);
     }
-    onConfirm?.(num);
-    onClose();
   };
 
 
