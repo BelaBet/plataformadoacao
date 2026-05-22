@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { Lock, Star, X } from "lucide-react";
+import { Check, Copy, Download, Lock, Star, X } from "lucide-react";
 
 export type ContribMethod = {
   key: "pix" | "boleto" | "fatura" | "mais" | "custom";
@@ -18,22 +18,46 @@ const PRESETS = [10, 25, 50, 100, 200];
 
 const METHOD_COPY: Record<ContribMethod["key"], { title: string; subtitle: string; cta: string }> = {
   pix:    { title: "Contribuir via Pix",          subtitle: "Qual valor você quer contribuir via Pix?",         cta: "Gerar Pix" },
-  boleto: { title: "Contribuir via Boleto",       subtitle: "Qual valor você quer contribuir via Boleto?",      cta: "Gerar Boleto" },
+  boleto: { title: "Gerar Boleto",                subtitle: "Qual valor você quer contribuir via Boleto?",      cta: "Gerar Boleto" },
   fatura: { title: "Contribuir com Cartão",       subtitle: "Qual valor você quer contribuir no cartão?",       cta: "Continuar no cartão" },
   mais:   { title: "Escolher forma de pagamento", subtitle: "Qual valor você quer contribuir?",                 cta: "Continuar" },
   custom: { title: "Contribuir",                  subtitle: "Qual valor você quer contribuir?",                 cta: "Continuar" },
 };
 
+function generateBoletoCode(valor: number) {
+  // mock formatted "linha digitável" 47-digit boleto
+  const cents = String(Math.round(valor * 100)).padStart(10, "0");
+  const rnd = (n: number) =>
+    Array.from({ length: n }, () => Math.floor(Math.random() * 10)).join("");
+  return `${rnd(5)}.${rnd(5)} ${rnd(5)}.${rnd(6)} ${rnd(5)}.${rnd(6)} ${rnd(1)} ${rnd(4)}${cents}`;
+}
+
+function addBusinessDays(date: Date, days: number) {
+  const d = new Date(date);
+  let added = 0;
+  while (added < days) {
+    d.setDate(d.getDate() + 1);
+    const day = d.getDay();
+    if (day !== 0 && day !== 6) added++;
+  }
+  return d;
+}
+
 export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props) {
   const [selected, setSelected] = useState<number | "custom">(25);
   const [value, setValue] = useState<string>("25");
+  const [boleto, setBoleto] = useState<{ code: string; due: Date; valor: number } | null>(null);
+  const [copied, setCopied] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const copy = METHOD_COPY[method?.key ?? "custom"];
+  const isBoleto = method?.key === "boleto";
 
   useEffect(() => {
     if (isOpen) {
       setSelected(25);
       setValue("25");
+      setBoleto(null);
+      setCopied(false);
     }
   }, [isOpen]);
 
@@ -60,8 +84,40 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props)
   const handleConfirm = () => {
     const num = Number(value);
     if (!num || num <= 0) return;
+    if (isBoleto) {
+      setBoleto({
+        code: generateBoletoCode(num),
+        due: addBusinessDays(new Date(), 3),
+        valor: num,
+      });
+      onConfirm?.(num);
+      return;
+    }
     onConfirm?.(num);
     onClose();
+  };
+
+  const handleCopy = async () => {
+    if (!boleto) return;
+    try {
+      await navigator.clipboard.writeText(boleto.code.replace(/\s|\./g, ""));
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      /* noop */
+    }
+  };
+
+  const handleDownloadPdf = () => {
+    if (!boleto) return;
+    const content = `BOLETO DE CONTRIBUIÇÃO\n\nValor: R$ ${boleto.valor.toFixed(2)}\nVencimento: ${boleto.due.toLocaleDateString("pt-BR")}\n\nLinha digitável:\n${boleto.code}\n`;
+    const blob = new Blob([content], { type: "application/pdf" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `boleto-${Date.now()}.pdf`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   if (typeof document === "undefined") return null;
@@ -85,76 +141,132 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props)
           <X className="h-5 w-5" />
         </button>
 
-        <div className="inline-flex items-center gap-1.5 rounded-full bg-[#EDE9FE] px-3 py-1 text-xs font-medium text-[#7C3AED]">
-          <Star className="h-3.5 w-3.5 fill-[#7C3AED]" />
-          Valor mais escolhido
-        </div>
+        {boleto ? (
+          <>
+            <h2 className="mt-1 text-[24px] font-bold leading-tight text-[#111827]">
+              Boleto gerado
+            </h2>
+            <p className="mt-1 text-sm text-[#6B7280]">
+              Pague no app do seu banco usando o código abaixo.
+            </p>
 
-        <h2 className="mt-4 text-[28px] font-bold leading-tight text-[#111827]">
-          {copy.title}
-        </h2>
-        <p className="mt-1 text-sm text-[#6B7280]">
-          {copy.subtitle}
-        </p>
+            <div className="mt-5 rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] p-4">
+              <div className="text-xs font-medium uppercase tracking-wide text-[#6B7280]">
+                Valor
+              </div>
+              <div className="mt-0.5 text-2xl font-bold text-[#111827]">
+                R$ {boleto.valor.toFixed(2).replace(".", ",")}
+              </div>
+              <div className="mt-3 text-xs font-medium uppercase tracking-wide text-[#6B7280]">
+                Vencimento
+              </div>
+              <div className="mt-0.5 text-sm font-semibold text-[#111827]">
+                {boleto.due.toLocaleDateString("pt-BR")} · válido por 3 dias úteis
+              </div>
+            </div>
 
-        <div className="mt-5 flex items-center rounded-xl border-2 border-[#7C3AED] px-4 py-3">
-          <span className="text-2xl font-semibold text-[#111827]">R$</span>
-          <input
-            ref={inputRef}
-            inputMode="numeric"
-            value={value}
-            onChange={(e) => handleInput(e.target.value)}
-            placeholder="0"
-            className="ml-2 w-full bg-transparent text-3xl font-bold text-[#7C3AED] outline-none placeholder:text-[#7C3AED]/30"
-          />
-        </div>
+            <div className="mt-4">
+              <div className="text-xs font-medium uppercase tracking-wide text-[#6B7280]">
+                Linha digitável
+              </div>
+              <div className="mt-1 break-all rounded-xl border border-[#E5E7EB] bg-white p-3 font-mono text-[13px] text-[#111827]">
+                {boleto.code}
+              </div>
+            </div>
 
-        <div className="mt-4 grid grid-cols-3 gap-2.5">
-          {PRESETS.map((v) => {
-            const active = selected === v;
-            return (
+            <button
+              onClick={handleCopy}
+              className="mt-3 flex h-[48px] w-full items-center justify-center gap-2 rounded-full bg-[#7C3AED] text-sm font-semibold text-white transition hover:bg-[#6D28D9]"
+            >
+              {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+              {copied ? "Código copiado" : "Copiar código"}
+            </button>
+
+            <button
+              onClick={handleDownloadPdf}
+              className="mt-2 flex h-[48px] w-full items-center justify-center gap-2 rounded-full border border-[#E5E7EB] bg-white text-sm font-semibold text-[#111827] transition hover:bg-gray-50"
+            >
+              <Download className="h-4 w-4" />
+              Baixar PDF do Boleto
+            </button>
+
+            <div className="mt-4 flex items-center justify-center gap-1.5 text-xs text-[#6B7280]">
+              <Lock className="h-3.5 w-3.5" />
+              Pagamento 100% seguro
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="inline-flex items-center gap-1.5 rounded-full bg-[#EDE9FE] px-3 py-1 text-xs font-medium text-[#7C3AED]">
+              <Star className="h-3.5 w-3.5 fill-[#7C3AED]" />
+              Valor mais escolhido
+            </div>
+
+            <h2 className="mt-4 text-[28px] font-bold leading-tight text-[#111827]">
+              {copy.title}
+            </h2>
+            <p className="mt-1 text-sm text-[#6B7280]">{copy.subtitle}</p>
+
+            <div className="mt-5 flex items-center rounded-xl border-2 border-[#7C3AED] px-4 py-3">
+              <span className="text-2xl font-semibold text-[#111827]">R$</span>
+              <input
+                ref={inputRef}
+                inputMode="numeric"
+                value={value}
+                onChange={(e) => handleInput(e.target.value)}
+                placeholder="0"
+                className="ml-2 w-full bg-transparent text-3xl font-bold text-[#7C3AED] outline-none placeholder:text-[#7C3AED]/30"
+              />
+            </div>
+
+            <div className="mt-4 grid grid-cols-3 gap-2.5">
+              {PRESETS.map((v) => {
+                const active = selected === v;
+                return (
+                  <button
+                    key={v}
+                    onClick={() => pickPreset(v)}
+                    className={`flex flex-col items-center justify-center rounded-xl border px-2 py-3 text-sm font-semibold transition ${
+                      active
+                        ? "border-[#7C3AED] bg-[#7C3AED] text-white"
+                        : "border-[#E5E7EB] bg-white text-[#111827] hover:border-gray-300"
+                    }`}
+                  >
+                    <span>R${v}</span>
+                    {v === 25 && active && (
+                      <span className="mt-0.5 text-[10px] font-normal opacity-90">
+                        Mais escolhido
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
               <button
-                key={v}
-                onClick={() => pickPreset(v)}
-                className={`flex flex-col items-center justify-center rounded-xl border px-2 py-3 text-sm font-semibold transition ${
-                  active
+                onClick={pickCustom}
+                className={`rounded-xl border px-2 py-3 text-sm font-semibold transition ${
+                  selected === "custom"
                     ? "border-[#7C3AED] bg-[#7C3AED] text-white"
                     : "border-[#E5E7EB] bg-white text-[#111827] hover:border-gray-300"
                 }`}
               >
-                <span>R${v}</span>
-                {v === 25 && active && (
-                  <span className="mt-0.5 text-[10px] font-normal opacity-90">
-                    Mais escolhido
-                  </span>
-                )}
+                Outro valor
               </button>
-            );
-          })}
-          <button
-            onClick={pickCustom}
-            className={`rounded-xl border px-2 py-3 text-sm font-semibold transition ${
-              selected === "custom"
-                ? "border-[#7C3AED] bg-[#7C3AED] text-white"
-                : "border-[#E5E7EB] bg-white text-[#111827] hover:border-gray-300"
-            }`}
-          >
-            Outro valor
-          </button>
-        </div>
+            </div>
 
-        <div className="mt-5 flex items-center justify-center gap-1.5 text-xs text-[#6B7280]">
-          <Lock className="h-3.5 w-3.5" />
-          Pagamento 100% seguro
-        </div>
+            <div className="mt-5 flex items-center justify-center gap-1.5 text-xs text-[#6B7280]">
+              <Lock className="h-3.5 w-3.5" />
+              Pagamento 100% seguro
+            </div>
 
-        <button
-          onClick={handleConfirm}
-          className="mt-4 h-[52px] w-full rounded-full bg-[#7C3AED] text-base font-semibold text-white transition hover:bg-[#6D28D9] disabled:opacity-50"
-          disabled={!Number(value)}
-        >
-          {copy.cta}
-        </button>
+            <button
+              onClick={handleConfirm}
+              className="mt-4 h-[52px] w-full rounded-full bg-[#7C3AED] text-base font-semibold text-white transition hover:bg-[#6D28D9] disabled:opacity-50"
+              disabled={!Number(value)}
+            >
+              {copy.cta}
+            </button>
+          </>
+        )}
       </div>
     </div>,
     document.body,
