@@ -523,6 +523,46 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props)
               </button>
             </div>
 
+            {isBoleto && (
+              <div className="mt-5 space-y-2.5">
+                <div>
+                  <label className="text-xs font-medium text-[#6B7280]">Nome completo</label>
+                  <input
+                    type="text"
+                    value={payerName}
+                    onChange={(e) => setPayerName(e.target.value)}
+                    maxLength={120}
+                    placeholder="Como aparece no documento"
+                    className="mt-1 h-11 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm text-[#111827] outline-none focus:border-[#7C3AED]"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-[#6B7280]">E-mail</label>
+                  <input
+                    type="email"
+                    value={payerEmail}
+                    onChange={(e) => setPayerEmail(e.target.value)}
+                    maxLength={255}
+                    placeholder="seu@email.com"
+                    className="mt-1 h-11 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm text-[#111827] outline-none focus:border-[#7C3AED]"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-[#6B7280]">CPF</label>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={payerCpf}
+                    onChange={(e) => setPayerCpf(formatCPF(e.target.value))}
+                    placeholder="000.000.000-00"
+                    className="mt-1 h-11 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm text-[#111827] outline-none focus:border-[#7C3AED]"
+                  />
+                </div>
+              </div>
+            )}
+
+
+
             <div className="mt-5 flex items-center justify-center gap-1.5 text-xs text-[#6B7280]">
               <Lock className="h-3.5 w-3.5" />
               Pagamento 100% seguro
