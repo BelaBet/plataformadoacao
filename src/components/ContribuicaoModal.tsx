@@ -192,11 +192,17 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props)
     setSelected(PRESETS.includes(num) ? num : "custom");
   };
 
-  const validatePayer = (): { name: string; email: string; cpf: string; phone: string } | null => {
+  const validatePayer = (
+    opts: { optional?: boolean } = {},
+  ): { name: string; email: string; cpf: string; phone: string } | null => {
     const name = payerName.trim();
     const email = payerEmail.trim();
     const cpfDigits = payerCpf.replace(/\D/g, "");
     const phoneDigits = payerPhone.replace(/\D/g, "");
+    const allEmpty = !name && !email && !cpfDigits && !phoneDigits;
+    if (opts.optional && allEmpty) {
+      return { name: "", email: "", cpf: "", phone: "" };
+    }
     if (name.length < 2) {
       setError("Informe o nome completo do pagador.");
       return null;
@@ -215,6 +221,7 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props)
     }
     return { name, email, cpf: cpfDigits, phone: phoneDigits };
   };
+
 
   const handleConfirm = async (override?: number) => {
     const num = override ?? Number(value);
