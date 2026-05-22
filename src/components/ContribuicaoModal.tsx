@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Check, Copy, Download, Lock, Star, X } from "lucide-react";
+import jsPDF from "jspdf";
+import JsBarcode from "jsbarcode";
+import { useTenant } from "@/lib/tenant-context";
 
 export type ContribMethod = {
   key: "pix" | "boleto" | "fatura" | "mais" | "custom";
