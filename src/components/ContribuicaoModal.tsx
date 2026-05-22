@@ -173,6 +173,11 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props)
 
   const handleDownloadPdf = () => {
     if (!boleto) return;
+    if (boleto.pdfUrl) {
+      window.open(boleto.pdfUrl, "_blank", "noopener,noreferrer");
+      return;
+    }
+
 
     const beneficiario = tenant?.name ?? "Beneficiário";
     const valorFmt = `R$ ${boleto.valor.toFixed(2).replace(".", ",")}`;
