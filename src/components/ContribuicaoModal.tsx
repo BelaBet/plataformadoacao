@@ -106,6 +106,7 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props)
   const pickPreset = (v: number) => {
     setSelected(v);
     setValue(String(v));
+    if (isBoleto) void handleConfirm(v);
   };
 
   const pickCustom = () => {
@@ -121,8 +122,8 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props)
     setSelected(PRESETS.includes(num) ? num : "custom");
   };
 
-  const handleConfirm = async () => {
-    const num = Number(value);
+  const handleConfirm = async (override?: number) => {
+    const num = override ?? Number(value);
     if (!num || num <= 0) return;
     if (isBoleto) {
       const code = generateBoletoCode(num);
@@ -486,7 +487,7 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props)
             )}
 
             <button
-              onClick={handleConfirm}
+              onClick={() => handleConfirm()}
               className="mt-4 flex h-[52px] w-full items-center justify-center gap-2 rounded-full bg-[#7C3AED] text-base font-semibold text-white transition hover:bg-[#6D28D9] disabled:opacity-50"
               disabled={!Number(value) || submitting}
             >
