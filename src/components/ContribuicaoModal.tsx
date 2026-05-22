@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Lock, Star, X } from "lucide-react";
 
 export type ContribMethod = {
