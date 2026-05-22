@@ -96,6 +96,7 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props)
   const { tenant } = useTenant();
   const createBoleto = useServerFn(createBoletoPayment);
   const createPix = useServerFn(createPixPayment);
+  const pollPix = useServerFn(pollPixCharge);
   const createCard = useServerFn(createCreditCardPayment);
   const [selected, setSelected] = useState<number | "custom">(25);
   const [value, setValue] = useState<string>("25");
