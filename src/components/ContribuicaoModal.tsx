@@ -71,11 +71,34 @@ function addBusinessDays(date: Date, days: number, country = "BR", state?: strin
   return d;
 }
 
+function formatCPF(raw: string) {
+  const d = raw.replace(/\D/g, "").slice(0, 11);
+  return d
+    .replace(/(\d{3})(\d)/, "$1.$2")
+    .replace(/(\d{3})(\d)/, "$1.$2")
+    .replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+}
+
+function isValidCPF(raw: string) {
+  const cpf = raw.replace(/\D/g, "");
+  if (cpf.length !== 11 || /^(\d)\1{10}$/.test(cpf)) return false;
+  const calc = (len: number) => {
+    let sum = 0;
+    for (let i = 0; i < len; i++) sum += Number(cpf[i]) * (len + 1 - i);
+    const r = (sum * 10) % 11;
+    return r === 10 ? 0 : r;
+  };
+  return calc(9) === Number(cpf[9]) && calc(10) === Number(cpf[10]);
+}
+
 export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props) {
   const { tenant } = useTenant();
   const createPayment = useServerFn(createBoletoPayment);
   const [selected, setSelected] = useState<number | "custom">(25);
   const [value, setValue] = useState<string>("25");
+  const [payerName, setPayerName] = useState("");
+  const [payerEmail, setPayerEmail] = useState("");
+  const [payerCpf, setPayerCpf] = useState("");
   const [boleto, setBoleto] = useState<{
     code: string;
     due: Date;
@@ -95,6 +118,9 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props)
     if (isOpen) {
       setSelected(25);
       setValue("25");
+      setPayerName("");
+      setPayerEmail("");
+      setPayerCpf("");
       setBoleto(null);
       setCopied(false);
       setSubmitting(false);
@@ -107,7 +133,6 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props)
   const pickPreset = (v: number) => {
     setSelected(v);
     setValue(String(v));
-    if (isBoleto) void handleConfirm(v);
   };
 
   const pickCustom = () => {
@@ -131,11 +156,24 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props)
         setError("Não foi possível identificar a instituição.");
         return;
       }
+      const name = payerName.trim();
+      const email = payerEmail.trim();
+      const cpfDigits = payerCpf.replace(/\D/g, "");
+      if (name.length < 2) return setError("Informe o nome completo do pagador.");
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return setError("Informe um e-mail válido.");
+      if (!isValidCPF(cpfDigits)) return setError("CPF inválido.");
+
       setSubmitting(true);
       setError(null);
       try {
         const result = await createPayment({
-          data: { tenantId: tenant.id, amount: num },
+          data: {
+            tenantId: tenant.id,
+            amount: num,
+            customerName: name,
+            customerEmail: email,
+            customerDocument: cpfDigits,
+          },
         });
         const due = result.dueAt ? new Date(result.dueAt) : addBusinessDays(new Date(), 3);
         const code = result.line || generateBoletoCode(num);
@@ -484,6 +522,46 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props)
                 Outro valor
               </button>
             </div>
+
+            {isBoleto && (
+              <div className="mt-5 space-y-2.5">
+                <div>
+                  <label className="text-xs font-medium text-[#6B7280]">Nome completo</label>
+                  <input
+                    type="text"
+                    value={payerName}
+                    onChange={(e) => setPayerName(e.target.value)}
+                    maxLength={120}
+                    placeholder="Como aparece no documento"
+                    className="mt-1 h-11 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm text-[#111827] outline-none focus:border-[#7C3AED]"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-[#6B7280]">E-mail</label>
+                  <input
+                    type="email"
+                    value={payerEmail}
+                    onChange={(e) => setPayerEmail(e.target.value)}
+                    maxLength={255}
+                    placeholder="seu@email.com"
+                    className="mt-1 h-11 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm text-[#111827] outline-none focus:border-[#7C3AED]"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-[#6B7280]">CPF</label>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={payerCpf}
+                    onChange={(e) => setPayerCpf(formatCPF(e.target.value))}
+                    placeholder="000.000.000-00"
+                    className="mt-1 h-11 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm text-[#111827] outline-none focus:border-[#7C3AED]"
+                  />
+                </div>
+              </div>
+            )}
+
+
 
             <div className="mt-5 flex items-center justify-center gap-1.5 text-xs text-[#6B7280]">
               <Lock className="h-3.5 w-3.5" />
