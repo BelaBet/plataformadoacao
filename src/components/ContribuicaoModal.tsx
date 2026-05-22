@@ -102,6 +102,7 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props)
   const [payerName, setPayerName] = useState("");
   const [payerEmail, setPayerEmail] = useState("");
   const [payerCpf, setPayerCpf] = useState("");
+  const [payerPhone, setPayerPhone] = useState("");
   // Card-only fields
   const [cardNumber, setCardNumber] = useState("");
   const [cardHolder, setCardHolder] = useState("");
