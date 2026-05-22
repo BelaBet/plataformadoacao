@@ -102,6 +102,7 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props)
   const [payerName, setPayerName] = useState("");
   const [payerEmail, setPayerEmail] = useState("");
   const [payerCpf, setPayerCpf] = useState("");
+  const [payerPhone, setPayerPhone] = useState("");
   // Card-only fields
   const [cardNumber, setCardNumber] = useState("");
   const [cardHolder, setCardHolder] = useState("");
@@ -152,6 +153,7 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props)
       setPayerName("");
       setPayerEmail("");
       setPayerCpf("");
+      setPayerPhone("");
       setCardNumber("");
       setCardHolder("");
       setCardExp("");
@@ -190,10 +192,11 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props)
     setSelected(PRESETS.includes(num) ? num : "custom");
   };
 
-  const validatePayer = (): { name: string; email: string; cpf: string } | null => {
+  const validatePayer = (): { name: string; email: string; cpf: string; phone: string } | null => {
     const name = payerName.trim();
     const email = payerEmail.trim();
     const cpfDigits = payerCpf.replace(/\D/g, "");
+    const phoneDigits = payerPhone.replace(/\D/g, "");
     if (name.length < 2) {
       setError("Informe o nome completo do pagador.");
       return null;
@@ -206,7 +209,11 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props)
       setError("CPF inválido.");
       return null;
     }
-    return { name, email, cpf: cpfDigits };
+    if (phoneDigits.length < 10 || phoneDigits.length > 11) {
+      setError("Informe um telefone válido com DDD.");
+      return null;
+    }
+    return { name, email, cpf: cpfDigits, phone: phoneDigits };
   };
 
   const handleConfirm = async (override?: number) => {
@@ -235,6 +242,7 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props)
             customerName: payer.name,
             customerEmail: payer.email,
             customerDocument: payer.cpf,
+            customerPhone: payer.phone,
           },
         });
         const due = result.dueAt ? new Date(result.dueAt) : addBusinessDays(new Date(), 3);
@@ -254,6 +262,7 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props)
             customerName: payer.name,
             customerEmail: payer.email,
             customerDocument: payer.cpf,
+            customerPhone: payer.phone,
           },
         });
         if (!result.qrCode) throw new Error("PIX não retornou código. Verifique a configuração da Pagar.me.");
@@ -288,6 +297,7 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props)
             customerName: payer.name,
             customerEmail: payer.email,
             customerDocument: payer.cpf,
+            customerPhone: payer.phone,
             card: {
               number: digits,
               holderName: cardHolder.trim(),
@@ -783,6 +793,28 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props)
                     value={payerCpf}
                     onChange={(e) => setPayerCpf(formatCPF(e.target.value))}
                     placeholder="000.000.000-00"
+                    className="mt-1 h-11 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm text-[#111827] outline-none focus:border-[#7C3AED]"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-[#6B7280]">Celular (WhatsApp)</label>
+                  <input
+                    type="tel"
+                    inputMode="numeric"
+                    value={payerPhone}
+                    onChange={(e) => {
+                      const d = e.target.value.replace(/\D/g, "").slice(0, 11);
+                      const formatted =
+                        d.length > 10
+                          ? `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`
+                          : d.length > 6
+                          ? `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}`
+                          : d.length > 2
+                          ? `(${d.slice(0, 2)}) ${d.slice(2)}`
+                          : d;
+                      setPayerPhone(formatted);
+                    }}
+                    placeholder="(11) 99999-9999"
                     className="mt-1 h-11 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm text-[#111827] outline-none focus:border-[#7C3AED]"
                   />
                 </div>
