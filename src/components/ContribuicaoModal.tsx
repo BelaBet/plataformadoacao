@@ -591,6 +591,11 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props)
           <X className="h-5 w-5" />
         </button>
 
+        <div className="mb-3 text-center text-[11px] font-semibold uppercase tracking-[0.18em] text-[#6B7280]">
+          TK2 Empreendimentos
+        </div>
+
+
         {pix ? (
           <>
             {pix.status === "paid" ? (
