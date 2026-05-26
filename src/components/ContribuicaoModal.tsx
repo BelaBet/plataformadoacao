@@ -303,7 +303,7 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props)
       setError("Não foi possível identificar a instituição.");
       return;
     }
-    const payer = validatePayer({ optional: isPix });
+    const payer = validatePayer(isPix ? { phoneOnly: true } : {});
     if (!payer) return;
 
 
