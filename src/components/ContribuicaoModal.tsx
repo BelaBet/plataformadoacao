@@ -244,12 +244,29 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props)
   };
 
   const validatePayer = (
-    opts: { optional?: boolean } = {},
+    opts: { optional?: boolean; phoneOnly?: boolean } = {},
   ): { name: string; email: string; cpf: string; phone: string } | null => {
     const name = payerName.trim();
     const email = payerEmail.trim();
     const cpfDigits = payerCpf.replace(/\D/g, "");
     const phoneDigits = payerPhone.replace(/\D/g, "");
+
+    if (opts.phoneOnly) {
+      if (phoneDigits.length < 10 || phoneDigits.length > 11) {
+        setError("Informe um telefone válido com DDD para envio do comprovante.");
+        return null;
+      }
+      if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        setError("Informe um e-mail válido ou deixe em branco.");
+        return null;
+      }
+      if (cpfDigits && !isValidCPF(cpfDigits)) {
+        setError("CPF inválido. Deixe em branco se preferir não informar.");
+        return null;
+      }
+      return { name, email, cpf: cpfDigits, phone: phoneDigits };
+    }
+
     const allEmpty = !name && !email && !cpfDigits && !phoneDigits;
     if (opts.optional && allEmpty) {
       return { name: "", email: "", cpf: "", phone: "" };
@@ -286,7 +303,7 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props)
       setError("Não foi possível identificar a instituição.");
       return;
     }
-    const payer = validatePayer({ optional: isPix });
+    const payer = validatePayer(isPix ? { phoneOnly: true } : {});
     if (!payer) return;
 
 
@@ -870,10 +887,11 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props)
             {needsPayer && (
               <div className="mt-5 space-y-2.5">
                 {isPix && (
-                  <p className="text-xs text-[#6B7280]">
-                    Dados do pagador são opcionais no Pix. Preencha o celular se quiser
-                    receber a confirmação por WhatsApp.
-                  </p>
+                  <div className="rounded-xl border border-[#FCD34D] bg-[#FEF3C7] px-3 py-2 text-xs text-[#92400E]">
+                    <strong>Atenção:</strong> apenas o celular é obrigatório no Pix —
+                    usaremos esse número para enviar o comprovante via WhatsApp.
+                    Nome, e-mail e CPF são opcionais.
+                  </div>
                 )}
 
                 <div>
@@ -910,7 +928,9 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props)
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-medium text-[#6B7280]">Celular (WhatsApp){isPix && " (opcional)"}</label>
+                  <label className="text-xs font-medium text-[#6B7280]">
+                    Celular (WhatsApp){isPix && <span className="text-[#DC2626]"> *obrigatório</span>}
+                  </label>
                   <input
                     type="tel"
                     inputMode="numeric"
