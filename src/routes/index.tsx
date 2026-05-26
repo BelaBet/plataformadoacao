@@ -971,6 +971,9 @@ function ChurchPage() {
         <p style={{ fontFamily: "'Playfair Display', serif", fontSize: 16, color: primary, margin: "0 0 8px" }}>
           {CHURCH.name}
         </p>
+        <p style={{ fontSize: 13, color: "#444", margin: "0 0 6px", fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase" }}>
+          TK2 Empreendimentos
+        </p>
         <p style={{ fontSize: 12, color: "#999", margin: 0 }}>
           Plataforma gerenciada pela{" "}
           <a
