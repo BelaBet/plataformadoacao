@@ -244,12 +244,29 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props)
   };
 
   const validatePayer = (
-    opts: { optional?: boolean } = {},
+    opts: { optional?: boolean; phoneOnly?: boolean } = {},
   ): { name: string; email: string; cpf: string; phone: string } | null => {
     const name = payerName.trim();
     const email = payerEmail.trim();
     const cpfDigits = payerCpf.replace(/\D/g, "");
     const phoneDigits = payerPhone.replace(/\D/g, "");
+
+    if (opts.phoneOnly) {
+      if (phoneDigits.length < 10 || phoneDigits.length > 11) {
+        setError("Informe um telefone válido com DDD para envio do comprovante.");
+        return null;
+      }
+      if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        setError("Informe um e-mail válido ou deixe em branco.");
+        return null;
+      }
+      if (cpfDigits && !isValidCPF(cpfDigits)) {
+        setError("CPF inválido. Deixe em branco se preferir não informar.");
+        return null;
+      }
+      return { name, email, cpf: cpfDigits, phone: phoneDigits };
+    }
+
     const allEmpty = !name && !email && !cpfDigits && !phoneDigits;
     if (opts.optional && allEmpty) {
       return { name: "", email: "", cpf: "", phone: "" };
