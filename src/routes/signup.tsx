@@ -96,9 +96,11 @@ function SignupPage() {
     setEmailTaken(false);
     if (!consent) return toast.error("Você precisa aceitar os termos LGPD.");
     const normalizedEmail = email.trim().toLowerCase();
+    const normalizedPassword = password.trim();
+    const normalizedConfirmPassword = confirmPassword.trim();
 
     const parsed = baseSchema.safeParse({
-      fullName, email: normalizedEmail, phone, password, confirmPassword, churchName, documentType, document,
+      fullName, email: normalizedEmail, phone, password: normalizedPassword, confirmPassword: normalizedConfirmPassword, churchName, documentType, document,
     });
     if (!parsed.success) {
       const issue = parsed.error.issues[0];
@@ -142,7 +144,7 @@ function SignupPage() {
     // 3) signUp anexando tenant_id e marcando como fundador (admin aprovado)
     const { error } = await supabase.auth.signUp({
       email: normalizedEmail,
-      password,
+      password: normalizedPassword,
       options: {
         emailRedirectTo: `${window.location.origin}/login`,
         data: {
