@@ -293,8 +293,8 @@ function OnboardingPage() {
                           }}
                           className={`rounded-md border px-4 py-3 text-sm font-medium transition ${
                             selected
-                              ? "border-[#C9A84C] bg-[#C9A84C]/10 text-[#C9A84C]"
-                              : "border-[#2a2a36] bg-[#13131A] text-[#A9A9B8] hover:border-[#3a3a46]"
+                              ? "border-primary bg-primary/10 text-primary"
+                              : "border-input bg-background text-muted-foreground hover:border-ring/50"
                           }`}
                         >
                           {opt.label}
