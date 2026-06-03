@@ -108,19 +108,19 @@ const STEPS = [
 // ─────────────────────────── UI primitives ───────────────────────────
 
 const fieldBase =
-  "w-full rounded-md border border-[#2a2a36] bg-[#13131A] px-3.5 py-2.5 text-sm text-[#EDEDF2] placeholder:text-[#5a5a6a] focus:outline-none focus:ring-2 focus:ring-[#C9A84C]/40 focus:border-[#C9A84C]/60 transition";
+  "w-full rounded-md border border-input bg-background px-3.5 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/40 focus:border-ring transition";
 
 function Label({ children, required }: { children: React.ReactNode; required?: boolean }) {
   return (
-    <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-[#A9A9B8]">
-      {children} {required && <span className="text-[#C9A84C]">*</span>}
+    <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-muted-foreground">
+      {children} {required && <span className="text-primary">*</span>}
     </label>
   );
 }
 
 function ErrorMsg({ msg }: { msg?: string }) {
   if (!msg) return null;
-  return <p className="mt-1.5 text-xs text-[#E05C5C]">{msg}</p>;
+  return <p className="mt-1.5 text-xs text-destructive">{msg}</p>;
 }
 
 // ─────────────────────────── Page ───────────────────────────
@@ -211,22 +211,22 @@ function OnboardingPage() {
   });
 
   return (
-    <div className="-mx-6 -my-8 min-h-[calc(100vh-4rem)] bg-[#0A0A0F] px-4 py-10 text-[#EDEDF2]">
+    <div className="min-h-[calc(100vh-4rem)] px-4 py-10">
       <div className="mx-auto w-full max-w-[640px]">
         <header className="mb-6 text-center">
-          <h1 style={{ fontFamily: "'Cormorant Garamond', serif" }} className="text-3xl font-semibold tracking-tight text-[#EDEDF2] sm:text-4xl">
+          <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
             Cadastro de Recebedor
           </h1>
-          <p className="mt-2 text-sm text-[#A9A9B8]" style={{ fontFamily: "'DM Sans', sans-serif" }}>
+          <p className="mt-2 text-sm text-muted-foreground">
             Complete as etapas para habilitar o recebimento via Pagar.me.
           </p>
         </header>
 
-        <div className="rounded-2xl border border-[#C9A84C]/20 bg-[#0F0F16] p-6 shadow-[0_10px_40px_-15px_rgba(201,168,76,0.15)] sm:p-8" style={{ fontFamily: "'DM Sans', sans-serif" }}>
+        <div className="rounded-2xl border border-border bg-card p-6 shadow-sm sm:p-8">
           {/* Progress bar */}
-          <div className="mb-2 h-1.5 w-full overflow-hidden rounded-full bg-[#1c1c26]">
+          <div className="mb-2 h-1.5 w-full overflow-hidden rounded-full bg-muted">
             <div
-              className="h-full rounded-full bg-gradient-to-r from-[#C9A84C] to-[#E6CB7E] transition-all duration-500"
+              className="h-full rounded-full bg-primary transition-all duration-500"
               style={{ width: `${progress}%` }}
             />
           </div>
@@ -245,26 +245,26 @@ function OnboardingPage() {
                     disabled={!clickable}
                     className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 transition ${
                       active
-                        ? "bg-[#C9A84C]/15 text-[#C9A84C]"
+                        ? "bg-primary/10 text-primary"
                         : done
-                        ? "text-[#C9A84C]/80 hover:text-[#C9A84C]"
-                        : "text-[#5a5a6a]"
+                        ? "text-primary/80 hover:text-primary"
+                        : "text-muted-foreground"
                     } ${clickable ? "cursor-pointer" : "cursor-not-allowed"}`}
                   >
                     <span
                       className={`flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-semibold ${
                         active
-                          ? "bg-[#C9A84C] text-[#0A0A0F]"
+                          ? "bg-primary text-primary-foreground"
                           : done
-                          ? "bg-[#C9A84C]/20 text-[#C9A84C]"
-                          : "bg-[#1c1c26] text-[#5a5a6a]"
+                          ? "bg-primary/20 text-primary"
+                          : "bg-muted text-muted-foreground"
                       }`}
                     >
                       {done ? <Check className="h-3 w-3" /> : i + 1}
                     </span>
                     <span className="hidden sm:inline">{s.title}</span>
                   </button>
-                  {i < visibleSteps.length - 1 && <span className="text-[#2a2a36]">›</span>}
+                  {i < visibleSteps.length - 1 && <span className="text-border">›</span>}
                 </li>
               );
             })}
@@ -274,7 +274,7 @@ function OnboardingPage() {
             {/* STEP: IDENT */}
             {currentKey === "ident" && (
               <div className="space-y-5">
-                <h2 className="text-lg font-medium text-[#EDEDF2]">Identificação do recebedor</h2>
+                <h2 className="text-lg font-medium text-foreground">Identificação do recebedor</h2>
                 <div>
                   <Label required>Tipo de recebedor</Label>
                   <div className="grid grid-cols-2 gap-3">
@@ -293,8 +293,8 @@ function OnboardingPage() {
                           }}
                           className={`rounded-md border px-4 py-3 text-sm font-medium transition ${
                             selected
-                              ? "border-[#C9A84C] bg-[#C9A84C]/10 text-[#C9A84C]"
-                              : "border-[#2a2a36] bg-[#13131A] text-[#A9A9B8] hover:border-[#3a3a46]"
+                              ? "border-primary bg-primary/10 text-primary"
+                              : "border-input bg-background text-muted-foreground hover:border-ring/50"
                           }`}
                         >
                           {opt.label}
@@ -347,14 +347,14 @@ function OnboardingPage() {
               <div className="space-y-6">
                 <h2 className="text-lg font-medium">Dados do sócio</h2>
                 {partners.map((_, i) => (
-                  <div key={i} className="rounded-lg border border-[#2a2a36] bg-[#0F0F16] p-5">
+                  <div key={i} className="rounded-lg border border-border bg-muted/30 p-5">
                     <div className="mb-4 flex items-center justify-between">
-                      <h3 className="text-sm font-medium text-[#C9A84C]">Sócio {i + 1}</h3>
+                      <h3 className="text-sm font-medium text-primary">Sócio {i + 1}</h3>
                       {i > 0 && (
                         <button
                           type="button"
                           onClick={() => removePartner(i)}
-                          className="flex items-center gap-1 text-xs text-[#A9A9B8] hover:text-[#E05C5C]"
+                          className="flex items-center gap-1 text-xs text-muted-foreground hover:text-destructive"
                         >
                           <Trash2 className="h-3.5 w-3.5" /> Remover
                         </button>
@@ -396,7 +396,7 @@ function OnboardingPage() {
                   <button
                     type="button"
                     onClick={addPartner}
-                    className="flex w-full items-center justify-center gap-2 rounded-md border border-dashed border-[#C9A84C]/40 px-4 py-3 text-sm text-[#C9A84C] transition hover:bg-[#C9A84C]/5"
+                    className="flex w-full items-center justify-center gap-2 rounded-md border border-dashed border-primary/40 px-4 py-3 text-sm text-primary transition hover:bg-primary/5"
                   >
                     <Plus className="h-4 w-4" /> Adicionar outro sócio
                   </button>
@@ -449,8 +449,8 @@ function OnboardingPage() {
 
                 <ReviewBlock title={getValues("partners").length > 1 ? "Sócios" : "Sócio"}>
                   {getValues("partners").map((p, i) => (
-                    <div key={i} className="rounded-md border border-[#2a2a36] bg-[#0A0A0F] p-3">
-                      <p className="mb-1 text-[10px] uppercase tracking-wider text-[#C9A84C]">Sócio {i + 1}</p>
+                    <div key={i} className="rounded-md border border-border bg-background p-3">
+                      <p className="mb-1 text-[10px] uppercase tracking-wider text-primary">Sócio {i + 1}</p>
                       <Row label="Nome" value={p.full_name} />
                       <Row label="CPF" value={p.cpf} />
                       <Row label="E-mail" value={p.email} />
@@ -466,12 +466,12 @@ function OnboardingPage() {
             )}
 
             {/* Nav */}
-            <div className="flex items-center justify-between gap-3 border-t border-[#2a2a36] pt-6">
+            <div className="flex items-center justify-between gap-3 border-t border-border pt-6">
               <button
                 type="button"
                 onClick={prev}
                 disabled={currentIndex === 0 || submitting}
-                className="flex items-center gap-1.5 rounded-md border border-[#2a2a36] bg-transparent px-4 py-2.5 text-sm text-[#A9A9B8] transition hover:border-[#3a3a46] hover:text-[#EDEDF2] disabled:cursor-not-allowed disabled:opacity-40"
+                className="flex items-center gap-1.5 rounded-md border border-input bg-transparent px-4 py-2.5 text-sm text-muted-foreground transition hover:border-ring/50 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
               >
                 <ChevronLeft className="h-4 w-4" /> Voltar
               </button>
@@ -480,7 +480,7 @@ function OnboardingPage() {
                 <button
                   type="button"
                   onClick={next}
-                  className="flex items-center gap-1.5 rounded-md bg-gradient-to-r from-[#C9A84C] to-[#E6CB7E] px-5 py-2.5 text-sm font-semibold text-[#0A0A0F] shadow-[0_4px_20px_-4px_rgba(201,168,76,0.45)] transition hover:brightness-110"
+                  className="flex items-center gap-1.5 rounded-md bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition hover:bg-primary/90"
                 >
                   Próximo <ChevronRight className="h-4 w-4" />
                 </button>
@@ -488,7 +488,7 @@ function OnboardingPage() {
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="flex items-center gap-2 rounded-md bg-gradient-to-r from-[#C9A84C] to-[#E6CB7E] px-5 py-2.5 text-sm font-semibold text-[#0A0A0F] shadow-[0_4px_20px_-4px_rgba(201,168,76,0.45)] transition hover:brightness-110 disabled:cursor-wait disabled:opacity-70"
+                  className="flex items-center gap-2 rounded-md bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition hover:bg-primary/90 disabled:cursor-wait disabled:opacity-70"
                 >
                   {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
                   {submitting ? "Cadastrando..." : "Confirmar e cadastrar"}
@@ -504,8 +504,8 @@ function OnboardingPage() {
 
 function ReviewBlock({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-lg border border-[#2a2a36] bg-[#0F0F16] p-4">
-      <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-[#C9A84C]">{title}</h3>
+    <div className="rounded-lg border border-border bg-muted/30 p-4">
+      <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-primary">{title}</h3>
       <div className="space-y-2">{children}</div>
     </div>
   );
@@ -514,8 +514,8 @@ function ReviewBlock({ title, children }: { title: string; children: React.React
 function Row({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-start justify-between gap-4 text-sm">
-      <span className="text-[#A9A9B8]">{label}</span>
-      <span className="text-right text-[#EDEDF2]">{value}</span>
+      <span className="text-muted-foreground">{label}</span>
+      <span className="text-right text-foreground">{value}</span>
     </div>
   );
 }
