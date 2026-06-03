@@ -927,6 +927,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_email_registered: { Args: { _email: string }; Returns: boolean }
       is_platform_admin: { Args: { _user_id: string }; Returns: boolean }
       is_tenant_staff: {
         Args: { _tenant_id: string; _user_id: string }

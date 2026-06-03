@@ -40,13 +40,38 @@ function SignupPage() {
   const [consent, setConsent] = useState(false);
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [emailError, setEmailError] = useState<string | null>(null);
+
+  const EMAIL_TAKEN_MSG =
+    "Este e-mail já está cadastrado em outra instituição. Use um e-mail diferente ou entre em contato com o suporte.";
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setEmailError(null);
     if (!consent) return toast.error("Você precisa aceitar os termos LGPD.");
     const parsed = signupSchema.safeParse({ fullName, email, phone, password });
-    if (!parsed.success) return toast.error(parsed.error.issues[0].message);
+    if (!parsed.success) {
+      const issue = parsed.error.issues[0];
+      if (issue.path[0] === "email") setEmailError(issue.message);
+      else toast.error(issue.message);
+      return;
+    }
     setLoading(true);
+
+    // Pré-checagem: e-mail já vinculado a outra instituição?
+    const { data: taken, error: rpcError } = await supabase.rpc("is_email_registered", {
+      _email: email,
+    });
+    if (rpcError) {
+      setLoading(false);
+      return toast.error(translateError(rpcError));
+    }
+    if (taken) {
+      setLoading(false);
+      setEmailError(EMAIL_TAKEN_MSG);
+      return;
+    }
+
     const { error } = await supabase.auth.signUp({
       email,
       password,
@@ -61,7 +86,15 @@ function SignupPage() {
       },
     });
     setLoading(false);
-    if (error) return toast.error(translateError(error));
+    if (error) {
+      const code = (error as { code?: string }).code;
+      const status = (error as { status?: number }).status;
+      if (code === "user_already_exists" || status === 422 || /already registered/i.test(error.message)) {
+        setEmailError(EMAIL_TAKEN_MSG);
+        return;
+      }
+      return toast.error(translateError(error));
+    }
     setSubmitted(true);
   };
 
@@ -97,7 +130,21 @@ function SignupPage() {
           </div>
           <div>
             <Label htmlFor="email">E-mail</Label>
-            <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" maxLength={255} />
+            <Input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => { setEmail(e.target.value); if (emailError) setEmailError(null); }}
+              required
+              autoComplete="email"
+              maxLength={255}
+              aria-invalid={!!emailError}
+              aria-describedby={emailError ? "email-error" : undefined}
+              className={emailError ? "border-destructive focus-visible:ring-destructive" : undefined}
+            />
+            {emailError && (
+              <p id="email-error" className="mt-1.5 text-xs text-destructive">{emailError}</p>
+            )}
           </div>
           <div>
             <Label htmlFor="phone">Celular</Label>
