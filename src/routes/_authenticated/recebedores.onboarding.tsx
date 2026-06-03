@@ -449,8 +449,8 @@ function OnboardingPage() {
 
                 <ReviewBlock title={getValues("partners").length > 1 ? "Sócios" : "Sócio"}>
                   {getValues("partners").map((p, i) => (
-                    <div key={i} className="rounded-md border border-[#2a2a36] bg-[#0A0A0F] p-3">
-                      <p className="mb-1 text-[10px] uppercase tracking-wider text-[#C9A84C]">Sócio {i + 1}</p>
+                    <div key={i} className="rounded-md border border-border bg-background p-3">
+                      <p className="mb-1 text-[10px] uppercase tracking-wider text-primary">Sócio {i + 1}</p>
                       <Row label="Nome" value={p.full_name} />
                       <Row label="CPF" value={p.cpf} />
                       <Row label="E-mail" value={p.email} />
