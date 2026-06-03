@@ -8,7 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { translateError } from "@/lib/translate-error";
-import { Download, ShieldAlert, Pencil, Check, X, Image as ImageIcon } from "lucide-react";
+import { Download, ShieldAlert, Pencil, Check, X } from "lucide-react";
+import { initials } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/profile")({
   component: ProfilePage,
@@ -177,12 +178,8 @@ function ProfilePage() {
         </div>
 
         <div className="mt-4 flex items-center gap-4">
-          <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full border bg-muted">
-            {tenant?.logo_url ? (
-              <img src={tenant.logo_url} alt="Logo da igreja" className="h-full w-full object-cover" />
-            ) : (
-              <ImageIcon className="h-7 w-7 text-muted-foreground" />
-            )}
+          <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full border bg-primary text-primary-foreground font-display text-lg">
+            {initials(tenant?.name)}
           </div>
           <div>
             <p className="font-medium">{tenant?.name ?? "—"}</p>

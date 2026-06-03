@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ShieldAlert, Crown, Users, Building2, CreditCard, Activity } from "lucide-react";
+import { initials } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/super-admin")({
   component: SuperAdminPage,
@@ -120,12 +121,8 @@ function SuperAdminPage() {
             tenants.map((t) => (
               <div key={t.id} className="flex items-center justify-between rounded-lg border bg-card px-3 py-2">
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="h-9 w-9 shrink-0 overflow-hidden rounded-md border bg-muted text-xs font-medium grid place-items-center">
-                    {t.logo_url ? (
-                      <img src={t.logo_url} alt="" className="h-full w-full object-cover" />
-                    ) : (
-                      <span className="text-muted-foreground">{t.name.slice(0, 2).toUpperCase()}</span>
-                    )}
+                  <div className="h-9 w-9 shrink-0 overflow-hidden rounded-md border bg-primary text-primary-foreground text-xs font-medium grid place-items-center">
+                    {initials(t.name)}
                   </div>
                   <div className="min-w-0">
                     <div className="truncate text-sm font-medium">{t.name}</div>
