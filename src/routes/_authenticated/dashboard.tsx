@@ -52,10 +52,7 @@ function Dashboard() {
   const greeting = `Olá, ${profile?.full_name?.split(" ")[0] ?? "membro"} 👋`;
 
   const cards = [
-    { label: "Eventos ativos", value: stats?.events ?? "—", icon: Calendar },
     ...(isStaff ? [{ label: "Membros", value: stats?.members ?? "—", icon: Users }] : []),
-    { label: "Doações (total)", value: stats ? `R$ ${stats.donations.toFixed(2)}` : "—", icon: Heart },
-    { label: "Notificações", value: stats?.notifications ?? 0, icon: Bell },
   ];
 
   return (
