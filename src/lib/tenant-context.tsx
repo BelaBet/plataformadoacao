@@ -60,7 +60,7 @@ async function resolveTenant(): Promise<{
   // 1. Custom domain
   const { data: byDomain } = await supabase
     .from("tenants")
-    .select("id,name,slug,logo_url,primary_color,secondary_color,custom_domain")
+    .select("id,name,slug,logo_url,primary_color,secondary_color,custom_domain,tagline")
     .eq("custom_domain", host)
     .eq("active", true)
     .maybeSingle();
@@ -73,7 +73,7 @@ async function resolveTenant(): Promise<{
     if (!RESERVED_SUBDOMAINS.has(sub) && !sub.startsWith("id-preview")) {
       const { data: bySub } = await supabase
         .from("tenants")
-        .select("id,name,slug,logo_url,primary_color,secondary_color,custom_domain")
+        .select("id,name,slug,logo_url,primary_color,secondary_color,custom_domain,tagline")
         .eq("slug", sub)
         .eq("active", true)
         .maybeSingle();
@@ -85,7 +85,7 @@ async function resolveTenant(): Promise<{
   if (slugParam) {
     const { data: bySlug } = await supabase
       .from("tenants")
-      .select("id,name,slug,logo_url,primary_color,secondary_color,custom_domain")
+      .select("id,name,slug,logo_url,primary_color,secondary_color,custom_domain,tagline")
       .eq("slug", slugParam)
       .eq("active", true)
       .maybeSingle();
@@ -95,7 +95,7 @@ async function resolveTenant(): Promise<{
   // 4. Default
   const { data: def } = await supabase
     .from("tenants")
-    .select("id,name,slug,logo_url,primary_color,secondary_color,custom_domain")
+    .select("id,name,slug,logo_url,primary_color,secondary_color,custom_domain,tagline")
     .eq("slug", "default")
     .maybeSingle();
   return { tenant: (def as Tenant) ?? null, resolvedBy: def ? "default" : null };
