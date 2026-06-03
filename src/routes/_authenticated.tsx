@@ -1,4 +1,4 @@
-import { createFileRoute, Outlet, redirect, Link, useRouter, useLocation } from "@tanstack/react-router";
+import { createFileRoute, Outlet, redirect, Link, useRouter } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth-context";
 import { useTenant } from "@/lib/tenant-context";
 import { Button } from "@/components/ui/button";
@@ -14,7 +14,7 @@ function AuthLayout() {
   const { user, loading, signOut, profile, isStaff } = useAuth();
   const { tenant } = useTenant();
   const router = useRouter();
-  const location = useLocation();
+  
 
   useEffect(() => {
     if (!loading && !user) {
@@ -22,12 +22,8 @@ function AuthLayout() {
     }
   }, [user, loading, router]);
 
-  // Pending users go straight to the onboarding flow after login.
-  useEffect(() => {
-    if (!loading && user && profile?.status === "pending" && location.pathname !== "/recebedores/onboarding") {
-      router.navigate({ to: "/recebedores/onboarding" });
-    }
-  }, [loading, user, profile?.status, location.pathname, router]);
+  // Onboarding access is gated inside /recebedores/onboarding itself
+  // (requires confirmed email + approved profile).
 
   void supabase;
   void redirect;

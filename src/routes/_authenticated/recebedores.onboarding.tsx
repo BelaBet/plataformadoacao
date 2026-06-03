@@ -1,14 +1,56 @@
-import { createFileRoute, useRouter } from "@tanstack/react-router";
+import { createFileRoute, useRouter, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
 import { Check, ChevronLeft, ChevronRight, Plus, Trash2, Loader2 } from "lucide-react";
+import { useAuth } from "@/lib/auth-context";
+import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/_authenticated/recebedores/onboarding")({
-  component: OnboardingPage,
+  component: OnboardingGate,
 });
+
+function OnboardingGate() {
+  const { user, profile, loading } = useAuth();
+
+  if (loading) {
+    return <div className="flex min-h-screen items-center justify-center text-muted-foreground">Carregando...</div>;
+  }
+
+  if (!user?.email_confirmed_at) {
+    return (
+      <div className="flex min-h-screen items-center justify-center px-4">
+        <div className="w-full max-w-md text-center">
+          <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-amber-500/10 text-amber-600 text-2xl">✉</div>
+          <h1 className="font-display text-2xl">Confirme seu e-mail</h1>
+          <p className="mt-3 text-muted-foreground">
+            Você precisa confirmar seu e-mail antes de iniciar o onboarding de recebedor.
+          </p>
+          <Button asChild variant="outline" className="mt-6"><Link to="/login">Voltar ao login</Link></Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (profile?.status !== "active") {
+    return (
+      <div className="flex min-h-screen items-center justify-center px-4">
+        <div className="w-full max-w-md text-center">
+          <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-amber-500/10 text-amber-600 text-2xl">⏳</div>
+          <h1 className="font-display text-2xl">Aguardando aprovação</h1>
+          <p className="mt-3 text-muted-foreground">
+            Seu cadastro precisa ser aprovado pelo gestor da comunidade antes de iniciar o onboarding de recebedor.
+          </p>
+          <Button asChild variant="outline" className="mt-6"><Link to="/dashboard">Ir para o painel</Link></Button>
+        </div>
+      </div>
+    );
+  }
+
+  return <OnboardingPage />;
+}
 
 // ─────────────────────────── Helpers ───────────────────────────
 
