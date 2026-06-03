@@ -211,22 +211,22 @@ function OnboardingPage() {
   });
 
   return (
-    <div className="-mx-6 -my-8 min-h-[calc(100vh-4rem)] bg-[#0A0A0F] px-4 py-10 text-[#EDEDF2]">
+    <div className="min-h-[calc(100vh-4rem)] px-4 py-10">
       <div className="mx-auto w-full max-w-[640px]">
         <header className="mb-6 text-center">
-          <h1 style={{ fontFamily: "'Cormorant Garamond', serif" }} className="text-3xl font-semibold tracking-tight text-[#EDEDF2] sm:text-4xl">
+          <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
             Cadastro de Recebedor
           </h1>
-          <p className="mt-2 text-sm text-[#A9A9B8]" style={{ fontFamily: "'DM Sans', sans-serif" }}>
+          <p className="mt-2 text-sm text-muted-foreground">
             Complete as etapas para habilitar o recebimento via Pagar.me.
           </p>
         </header>
 
-        <div className="rounded-2xl border border-[#C9A84C]/20 bg-[#0F0F16] p-6 shadow-[0_10px_40px_-15px_rgba(201,168,76,0.15)] sm:p-8" style={{ fontFamily: "'DM Sans', sans-serif" }}>
+        <div className="rounded-2xl border border-border bg-card p-6 shadow-sm sm:p-8">
           {/* Progress bar */}
-          <div className="mb-2 h-1.5 w-full overflow-hidden rounded-full bg-[#1c1c26]">
+          <div className="mb-2 h-1.5 w-full overflow-hidden rounded-full bg-muted">
             <div
-              className="h-full rounded-full bg-gradient-to-r from-[#C9A84C] to-[#E6CB7E] transition-all duration-500"
+              className="h-full rounded-full bg-primary transition-all duration-500"
               style={{ width: `${progress}%` }}
             />
           </div>
@@ -245,26 +245,26 @@ function OnboardingPage() {
                     disabled={!clickable}
                     className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 transition ${
                       active
-                        ? "bg-[#C9A84C]/15 text-[#C9A84C]"
+                        ? "bg-primary/10 text-primary"
                         : done
-                        ? "text-[#C9A84C]/80 hover:text-[#C9A84C]"
-                        : "text-[#5a5a6a]"
+                        ? "text-primary/80 hover:text-primary"
+                        : "text-muted-foreground"
                     } ${clickable ? "cursor-pointer" : "cursor-not-allowed"}`}
                   >
                     <span
                       className={`flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-semibold ${
                         active
-                          ? "bg-[#C9A84C] text-[#0A0A0F]"
+                          ? "bg-primary text-primary-foreground"
                           : done
-                          ? "bg-[#C9A84C]/20 text-[#C9A84C]"
-                          : "bg-[#1c1c26] text-[#5a5a6a]"
+                          ? "bg-primary/20 text-primary"
+                          : "bg-muted text-muted-foreground"
                       }`}
                     >
                       {done ? <Check className="h-3 w-3" /> : i + 1}
                     </span>
                     <span className="hidden sm:inline">{s.title}</span>
                   </button>
-                  {i < visibleSteps.length - 1 && <span className="text-[#2a2a36]">›</span>}
+                  {i < visibleSteps.length - 1 && <span className="text-border">›</span>}
                 </li>
               );
             })}
