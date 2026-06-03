@@ -138,7 +138,7 @@ function SignupPage() {
               id="email"
               type="email"
               value={email}
-              onChange={(e) => { setEmail(e.target.value); if (emailError) setEmailError(null); }}
+              onChange={(e) => { setEmail(e.target.value); if (emailError) setEmailError(null); if (emailTaken) setEmailTaken(false); }}
               required
               autoComplete="email"
               maxLength={255}
@@ -147,7 +147,14 @@ function SignupPage() {
               className={emailError ? "border-destructive focus-visible:ring-destructive" : undefined}
             />
             {emailError && (
-              <p id="email-error" className="mt-1.5 text-xs text-destructive">{emailError}</p>
+              <p id="email-error" className="mt-1.5 text-xs text-destructive">
+                {emailError}{" "}
+                {emailTaken && (
+                  <Link to="/login" className="font-medium text-primary underline">
+                    Ir para o login
+                  </Link>
+                )}
+              </p>
             )}
           </div>
           <div>
