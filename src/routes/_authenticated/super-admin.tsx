@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ShieldAlert, Crown, Users, Building2, CreditCard, Activity } from "lucide-react";
+import { initials } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/super-admin")({
   component: SuperAdminPage,
