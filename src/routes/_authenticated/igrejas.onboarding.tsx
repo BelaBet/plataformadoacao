@@ -294,6 +294,15 @@ function OnboardingPage() {
   const onSubmit = handleSubmit(async (values) => {
     setSubmitting(true);
     try {
+      // Revalida todos os e-mails antes de concluir
+      for (const key of ["empresa", "socio", "receb"]) {
+        const ok = await checkStepEmails(key);
+        if (!ok) {
+          setSubmitting(false);
+          toast.error(EMAIL_TAKEN_MSG);
+          return;
+        }
+      }
       const payload: {
         name: string;
         tagline: string;
