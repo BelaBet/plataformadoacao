@@ -25,10 +25,14 @@ const baseSchema = z.object({
   email: z.string().trim().email("E-mail inválido").max(255),
   phone: z.string().trim().regex(/^\(\d{2}\) \d{5}-\d{4}$/, "Telefone inválido"),
   password: z.string().min(8, "A senha deve ter no mínimo 8 caracteres.").max(72),
+  confirmPassword: z.string().min(1, "Confirme sua senha"),
   churchName: z.string().trim().min(2, "Informe o nome da instituição").max(120),
   documentType: z.enum(["cnpj", "cpf"]),
   document: z.string().trim().min(11, "Documento obrigatório"),
 }).superRefine((d, ctx) => {
+  if (d.password !== d.confirmPassword) {
+    ctx.addIssue({ path: ["confirmPassword"], code: "custom", message: "As senhas não conferem." });
+  }
   if (d.documentType === "cnpj" && !cnpj.isValid(d.document)) {
     ctx.addIssue({ path: ["document"], code: "custom", message: "CNPJ inválido" });
   }
@@ -69,6 +73,7 @@ function SignupPage() {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [churchName, setChurchName] = useState("");
   const [documentType, setDocumentType] = useState<"cnpj" | "cpf">("cnpj");
   const [document, setDocument] = useState("");
@@ -90,9 +95,12 @@ function SignupPage() {
     setEmailError(null);
     setEmailTaken(false);
     if (!consent) return toast.error("Você precisa aceitar os termos LGPD.");
+    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedPassword = password.trim();
+    const normalizedConfirmPassword = confirmPassword.trim();
 
     const parsed = baseSchema.safeParse({
-      fullName, email, phone, password, churchName, documentType, document,
+      fullName, email: normalizedEmail, phone, password: normalizedPassword, confirmPassword: normalizedConfirmPassword, churchName, documentType, document,
     });
     if (!parsed.success) {
       const issue = parsed.error.issues[0];
@@ -104,7 +112,7 @@ function SignupPage() {
 
     // 1) e-mail já existe em qualquer tenant?
     const { data: taken, error: rpcError } = await supabase.rpc("is_email_registered", {
-      _email: email,
+      _email: normalizedEmail,
     });
     if (rpcError) {
       setLoading(false);
@@ -135,10 +143,10 @@ function SignupPage() {
 
     // 3) signUp anexando tenant_id e marcando como fundador (admin aprovado)
     const { error } = await supabase.auth.signUp({
-      email,
-      password,
+      email: normalizedEmail,
+      password: normalizedPassword,
       options: {
-        emailRedirectTo: `${window.location.origin}/dashboard`,
+        emailRedirectTo: `${window.location.origin}/login?confirmed=1`,
         data: {
           full_name: fullName,
           phone,
@@ -265,6 +273,19 @@ function SignupPage() {
             <div>
               <Label htmlFor="password">Senha</Label>
               <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={8} maxLength={72} autoComplete="new-password" />
+            </div>
+            <div>
+              <Label htmlFor="confirm-password">Confirmar senha</Label>
+              <Input
+                id="confirm-password"
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+                minLength={8}
+                maxLength={72}
+                autoComplete="new-password"
+              />
             </div>
           </div>
 
