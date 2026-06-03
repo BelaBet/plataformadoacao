@@ -91,8 +91,12 @@ function SignupPage() {
     setLoading(false);
     if (error) {
       const code = (error as { code?: string }).code;
-      const status = (error as { status?: number }).status;
-      if (code === "user_already_exists" || status === 422 || /already registered/i.test(error.message)) {
+      const msg = error.message ?? "";
+      const isDuplicate =
+        code === "user_already_exists" ||
+        code === "email_exists" ||
+        /already\s+registered|already\s+exists|user\s+already/i.test(msg);
+      if (isDuplicate) {
         setEmailError(EMAIL_TAKEN_MSG);
         setEmailTaken(true);
         return;
