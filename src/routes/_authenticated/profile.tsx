@@ -8,7 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { translateError } from "@/lib/translate-error";
-import { Download, ShieldAlert, Pencil, Check, X, Image as ImageIcon } from "lucide-react";
+import { Download, ShieldAlert, Pencil, Check, X } from "lucide-react";
+import { initials } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/profile")({
   component: ProfilePage,
