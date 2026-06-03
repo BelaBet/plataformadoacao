@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export const Route = createFileRoute("/_authenticated/admin/billing")({
   component: BillingPage,
-  head: () => ({ meta: [{ title: "Painel — Billing" }] }),
+  head: () => ({ meta: [{ title: "Painel — Financeiro" }] }),
 });
 
 const SUB_STATUS: Record<string, string> = {
