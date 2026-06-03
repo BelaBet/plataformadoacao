@@ -347,14 +347,14 @@ function OnboardingPage() {
               <div className="space-y-6">
                 <h2 className="text-lg font-medium">Dados do sócio</h2>
                 {partners.map((_, i) => (
-                  <div key={i} className="rounded-lg border border-[#2a2a36] bg-[#0F0F16] p-5">
+                  <div key={i} className="rounded-lg border border-border bg-muted/30 p-5">
                     <div className="mb-4 flex items-center justify-between">
-                      <h3 className="text-sm font-medium text-[#C9A84C]">Sócio {i + 1}</h3>
+                      <h3 className="text-sm font-medium text-primary">Sócio {i + 1}</h3>
                       {i > 0 && (
                         <button
                           type="button"
                           onClick={() => removePartner(i)}
-                          className="flex items-center gap-1 text-xs text-[#A9A9B8] hover:text-[#E05C5C]"
+                          className="flex items-center gap-1 text-xs text-muted-foreground hover:text-destructive"
                         >
                           <Trash2 className="h-3.5 w-3.5" /> Remover
                         </button>
