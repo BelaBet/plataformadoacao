@@ -62,7 +62,7 @@ function BillingPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="font-display text-3xl">Billing</h1>
+        <h1 className="font-display text-3xl">Financeiro</h1>
         <p className="text-sm text-muted-foreground">Planos, assinaturas e faturas das igrejas.</p>
       </div>
 
