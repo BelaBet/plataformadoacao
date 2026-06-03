@@ -94,6 +94,7 @@ function SignupPage() {
       const status = (error as { status?: number }).status;
       if (code === "user_already_exists" || status === 422 || /already registered/i.test(error.message)) {
         setEmailError(EMAIL_TAKEN_MSG);
+        setEmailTaken(true);
         return;
       }
       return toast.error(translateError(error));
