@@ -19,20 +19,29 @@ function LoginPage() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [emailConfirmed, setEmailConfirmed] = useState(false);
 
-  // Se o usuário acabou de confirmar o e-mail, o Supabase cria sessão
-  // automaticamente no redirect. Detectamos e mandamos direto ao painel.
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      if (data.session) navigate({ to: "/dashboard", replace: true });
-    });
-    const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
-      if (session && (event === "SIGNED_IN" || event === "INITIAL_SESSION")) {
-        navigate({ to: "/dashboard", replace: true });
+    if (typeof window === "undefined") return;
+    const confirmed = new URLSearchParams(window.location.search).get("confirmed") === "1";
+    if (!confirmed) return;
+
+    setEmailConfirmed(true);
+    let signedOut = false;
+    const signOutConfirmationSession = async (session: unknown) => {
+      if (!session || signedOut) return;
+      signedOut = true;
+      await supabase.auth.signOut();
+    };
+
+    supabase.auth.getSession().then(({ data }) => signOutConfirmationSession(data.session));
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session) {
+        void signOutConfirmationSession(session);
       }
     });
     return () => sub.subscription.unsubscribe();
-  }, [navigate]);
+  }, []);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,6 +62,11 @@ function LoginPage() {
         <Link to="/" className="mb-8 block text-sm text-muted-foreground hover:underline">← Voltar</Link>
         <h1 className="font-display text-3xl">Bem-vindo</h1>
         <p className="mt-1 text-sm text-muted-foreground">Acesse sua comunidade.</p>
+        {emailConfirmed && (
+          <div className="mt-4 rounded-lg border border-primary/20 bg-primary/10 p-3 text-sm text-primary">
+            E-mail confirmado. Agora entre com seu e-mail e senha.
+          </div>
+        )}
         <form onSubmit={submit} className="mt-8 space-y-4">
           <div>
             <Label htmlFor="email">E-mail</Label>

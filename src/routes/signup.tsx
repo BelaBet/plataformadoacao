@@ -146,7 +146,7 @@ function SignupPage() {
       email: normalizedEmail,
       password: normalizedPassword,
       options: {
-        emailRedirectTo: `${window.location.origin}/login`,
+        emailRedirectTo: `${window.location.origin}/login?confirmed=1`,
         data: {
           full_name: fullName,
           phone,
