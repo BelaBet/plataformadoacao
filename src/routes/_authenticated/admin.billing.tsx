@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export const Route = createFileRoute("/_authenticated/admin/billing")({
   component: BillingPage,
-  head: () => ({ meta: [{ title: "Painel — Billing" }] }),
+  head: () => ({ meta: [{ title: "Painel — Financeiro" }] }),
 });
 
 const SUB_STATUS: Record<string, string> = {
@@ -62,7 +62,7 @@ function BillingPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="font-display text-3xl">Billing</h1>
+        <h1 className="font-display text-3xl">Financeiro</h1>
         <p className="text-sm text-muted-foreground">Planos, assinaturas e faturas das igrejas.</p>
       </div>
 
@@ -84,7 +84,7 @@ function BillingPage() {
             <Table>
               <TableHeader><TableRow>
                 <TableHead>Plano</TableHead><TableHead className="text-right">Mensal</TableHead><TableHead className="text-right">Taxa</TableHead>
-                <TableHead className="text-right">Membros</TableHead><TableHead className="text-right">Eventos/mês</TableHead><TableHead>Features</TableHead>
+                <TableHead className="text-right">Membros</TableHead><TableHead className="text-right">Eventos/mês</TableHead><TableHead>Recursos</TableHead>
               </TableRow></TableHeader>
               <TableBody>
                 {plans?.map((p) => (
