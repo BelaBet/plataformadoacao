@@ -14,14 +14,6 @@ function Dashboard() {
   const { profile, roles } = useAuth();
   const isStaff = roles.includes("manager") || roles.includes("admin");
 
-  const { data: stats } = useQuery({
-    queryKey: ["dash-stats", profile?.tenant_id, isStaff],
-    enabled: !!profile && isStaff,
-    queryFn: async () => {
-      const { count } = await supabase.from("profiles").select("id", { count: "exact", head: true });
-      return { members: count ?? 0 };
-    },
-  });
 
   const { data: myTenant } = useQuery({
     queryKey: ["my-tenant", profile?.tenant_id],
