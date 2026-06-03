@@ -396,7 +396,7 @@ function OnboardingPage() {
                   <button
                     type="button"
                     onClick={addPartner}
-                    className="flex w-full items-center justify-center gap-2 rounded-md border border-dashed border-[#C9A84C]/40 px-4 py-3 text-sm text-[#C9A84C] transition hover:bg-[#C9A84C]/5"
+                    className="flex w-full items-center justify-center gap-2 rounded-md border border-dashed border-primary/40 px-4 py-3 text-sm text-primary transition hover:bg-primary/5"
                   >
                     <Plus className="h-4 w-4" /> Adicionar outro sócio
                   </button>
