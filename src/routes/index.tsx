@@ -697,20 +697,25 @@ function MaisDialog({ open, onClose, onPick }: { open: boolean; onClose: () => v
 
 // ── MAIN PAGE ─────────────────────────────────────────────────────────────────
 function ChurchPage() {
+  return <ChurchPageView />;
+}
+
+export function ChurchPageView({ tenantOverride }: { tenantOverride?: Tenant | null } = {}) {
   const [copied, setCopied] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const { tenant } = useTenant();
-  // CHURCH agora deriva dos dados do tenant cadastrado, com fallback para o mock.
+  const { tenant: ctxTenant } = useTenant();
+  const tenant = tenantOverride ?? ctxTenant;
+  const { theme } = useChurchTheme();
+  // Cores derivam do tema extra\u00eddo da logo (TenantThemeBridge / ChurchThemeProvider).
   const CHURCH = {
     name: tenant?.name ?? CHURCH_DEFAULTS.name,
     tagline: tenant?.tagline ?? CHURCH_DEFAULTS.tagline,
     logo: tenant?.logo_url ?? null,
-    primaryColor: tenant?.primary_color ?? CHURCH_DEFAULTS.primaryColor,
-    accentColor: tenant?.secondary_color ?? CHURCH_DEFAULTS.accentColor,
     coverPhoto: null as string | null,
   };
-  const primary = CHURCH.primaryColor;
-  const accent = CHURCH.accentColor;
+  const primary = theme.primary;
+  const accent = theme.accent;
+
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 60);
