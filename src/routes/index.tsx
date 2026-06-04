@@ -999,21 +999,30 @@ export function ChurchPageView({ tenantOverride }: { tenantOverride?: Tenant | n
 
       {/* ── FOOTER ─────────────────────────────────────────────────────── */}
       <footer style={{ padding: "48px 24px", textAlign: "center", background: "#fafaf7", borderTop: "1px solid #eee" }}>
-        <div
-          style={{
-            width: 48,
-            height: 48,
-            borderRadius: 999,
-            background: primary,
-            color: "#fff",
-            display: "grid",
-            placeItems: "center",
-            margin: "0 auto 12px",
-            fontWeight: 700,
-          }}
-        >
-          {initials(CHURCH.name)}
-        </div>
+        {CHURCH.logo ? (
+          <img
+            src={CHURCH.logo}
+            alt={CHURCH.name}
+            style={{ width: 48, height: 48, borderRadius: 999, objectFit: "cover", background: "#fff", margin: "0 auto 12px", display: "block" }}
+          />
+        ) : (
+          <div
+            style={{
+              width: 48,
+              height: 48,
+              borderRadius: 999,
+              background: primary,
+              color: "#fff",
+              display: "grid",
+              placeItems: "center",
+              margin: "0 auto 12px",
+              fontWeight: 700,
+            }}
+          >
+            {initials(CHURCH.name)}
+          </div>
+        )}
+
         <p style={{ fontFamily: "'Playfair Display', serif", fontSize: 16, color: primary, margin: "0 0 8px" }}>
           {CHURCH.name}
         </p>
