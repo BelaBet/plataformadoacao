@@ -30,7 +30,8 @@ import { cn } from "@/lib/utils";
 import { ContribuicaoModal } from "@/components/ContribuicaoModal";
 import { QRCodeCanvas } from "qrcode.react";
 import { buildPixPayload } from "@/lib/pix";
-import { useTenant } from "@/lib/tenant-context";
+import { useTenant, type Tenant } from "@/lib/tenant-context";
+import { useChurchTheme } from "@/lib/theme";
 
 export const Route = createFileRoute("/")({
   component: ChurchPage,
@@ -41,6 +42,7 @@ export const Route = createFileRoute("/")({
     ],
   }),
 });
+
 
 // ── Fallback data (sobrescrita pelos dados do tenant carregados via useTenant) ─
 const CHURCH_DEFAULTS = {
@@ -695,20 +697,25 @@ function MaisDialog({ open, onClose, onPick }: { open: boolean; onClose: () => v
 
 // ── MAIN PAGE ─────────────────────────────────────────────────────────────────
 function ChurchPage() {
+  return <ChurchPageView />;
+}
+
+export function ChurchPageView({ tenantOverride }: { tenantOverride?: Tenant | null } = {}) {
   const [copied, setCopied] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const { tenant } = useTenant();
-  // CHURCH agora deriva dos dados do tenant cadastrado, com fallback para o mock.
+  const { tenant: ctxTenant } = useTenant();
+  const tenant = tenantOverride ?? ctxTenant;
+  const { theme } = useChurchTheme();
+  // Cores derivam do tema extra\u00eddo da logo (TenantThemeBridge / ChurchThemeProvider).
   const CHURCH = {
     name: tenant?.name ?? CHURCH_DEFAULTS.name,
     tagline: tenant?.tagline ?? CHURCH_DEFAULTS.tagline,
     logo: tenant?.logo_url ?? null,
-    primaryColor: tenant?.primary_color ?? CHURCH_DEFAULTS.primaryColor,
-    accentColor: tenant?.secondary_color ?? CHURCH_DEFAULTS.accentColor,
     coverPhoto: null as string | null,
   };
-  const primary = CHURCH.primaryColor;
-  const accent = CHURCH.accentColor;
+  const primary = theme.primary;
+  const accent = theme.accent;
+
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 60);
@@ -765,21 +772,30 @@ function ChurchPage() {
         }}
       >
         <div style={{ maxWidth: 1200, margin: "0 auto", padding: "14px 24px", display: "flex", alignItems: "center", gap: 10 }}>
-          <div
-            style={{
-              width: 32,
-              height: 32,
-              borderRadius: 999,
-              background: primary,
-              color: "#fff",
-              display: "grid",
-              placeItems: "center",
-              fontSize: 12,
-              fontWeight: 700,
-            }}
-          >
-            {initials(CHURCH.name)}
-          </div>
+          {CHURCH.logo ? (
+            <img
+              src={CHURCH.logo}
+              alt={CHURCH.name}
+              style={{ width: 32, height: 32, borderRadius: 999, objectFit: "cover", background: "#fff" }}
+            />
+          ) : (
+            <div
+              style={{
+                width: 32,
+                height: 32,
+                borderRadius: 999,
+                background: primary,
+                color: "#fff",
+                display: "grid",
+                placeItems: "center",
+                fontSize: 12,
+                fontWeight: 700,
+              }}
+            >
+              {initials(CHURCH.name)}
+            </div>
+          )}
+
           <span style={{ fontWeight: 600, color: scrolled ? "#1a1a1a" : "transparent", transition: "color .3s" }}>
             {CHURCH.name}
           </span>
@@ -838,19 +854,29 @@ function ChurchPage() {
         />
 
         <div className="fade-up relative mx-auto max-w-3xl flex flex-col items-center">
-          {/* Logo — sempre iniciais */}
+          {/* Logo da empresa quando houver, sen\u00e3o iniciais */}
           <div className="mb-1 sm:mb-6">
-            <div
-              className="mx-auto grid place-items-center rounded-full w-11 h-11 sm:w-24 sm:h-24 text-sm sm:text-3xl font-extrabold"
-              style={{
-                background: "#fff",
-                color: primary,
-                border: `2px solid ${accent}`,
-              }}
-            >
-              {initials(CHURCH.name)}
-            </div>
+            {CHURCH.logo ? (
+              <img
+                src={CHURCH.logo}
+                alt={CHURCH.name}
+                className="mx-auto rounded-full w-11 h-11 sm:w-24 sm:h-24 object-cover bg-white"
+                style={{ border: `2px solid ${accent}` }}
+              />
+            ) : (
+              <div
+                className="mx-auto grid place-items-center rounded-full w-11 h-11 sm:w-24 sm:h-24 text-sm sm:text-3xl font-extrabold"
+                style={{
+                  background: "#fff",
+                  color: primary,
+                  border: `2px solid ${accent}`,
+                }}
+              >
+                {initials(CHURCH.name)}
+              </div>
+            )}
           </div>
+
 
           {/* Church Name */}
           <h1
@@ -973,21 +999,30 @@ function ChurchPage() {
 
       {/* ── FOOTER ─────────────────────────────────────────────────────── */}
       <footer style={{ padding: "48px 24px", textAlign: "center", background: "#fafaf7", borderTop: "1px solid #eee" }}>
-        <div
-          style={{
-            width: 48,
-            height: 48,
-            borderRadius: 999,
-            background: primary,
-            color: "#fff",
-            display: "grid",
-            placeItems: "center",
-            margin: "0 auto 12px",
-            fontWeight: 700,
-          }}
-        >
-          {initials(CHURCH.name)}
-        </div>
+        {CHURCH.logo ? (
+          <img
+            src={CHURCH.logo}
+            alt={CHURCH.name}
+            style={{ width: 48, height: 48, borderRadius: 999, objectFit: "cover", background: "#fff", margin: "0 auto 12px", display: "block" }}
+          />
+        ) : (
+          <div
+            style={{
+              width: 48,
+              height: 48,
+              borderRadius: 999,
+              background: primary,
+              color: "#fff",
+              display: "grid",
+              placeItems: "center",
+              margin: "0 auto 12px",
+              fontWeight: 700,
+            }}
+          >
+            {initials(CHURCH.name)}
+          </div>
+        )}
+
         <p style={{ fontFamily: "'Playfair Display', serif", fontSize: 16, color: primary, margin: "0 0 8px" }}>
           {CHURCH.name}
         </p>
