@@ -24,10 +24,10 @@ import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authenticated/notifications'
 import { Route as AuthenticatedMessagesRouteImport } from './routes/_authenticated/messages'
 import { Route as AuthenticatedManageRouteImport } from './routes/_authenticated/manage'
-import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedManageIndexRouteImport } from './routes/_authenticated/manage.index'
 import { Route as AuthenticatedIgrejasIndexRouteImport } from './routes/_authenticated/igrejas.index'
+import { Route as AuthenticatedDashboardIndexRouteImport } from './routes/_authenticated/dashboard.index'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
 import { Route as AuthenticatedManageSettingsRouteImport } from './routes/_authenticated/manage.settings'
 import { Route as AuthenticatedManageMembersRouteImport } from './routes/_authenticated/manage.members'
@@ -115,11 +115,6 @@ const AuthenticatedManageRoute = AuthenticatedManageRouteImport.update({
   path: '/manage',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
-const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
 const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   id: '/admin',
   path: '/admin',
@@ -135,6 +130,12 @@ const AuthenticatedIgrejasIndexRoute =
   AuthenticatedIgrejasIndexRouteImport.update({
     id: '/igrejas/',
     path: '/igrejas/',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedDashboardIndexRoute =
+  AuthenticatedDashboardIndexRouteImport.update({
+    id: '/dashboard/',
+    path: '/dashboard/',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
 const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
@@ -210,7 +211,6 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/admin': typeof AuthenticatedAdminRouteWithChildren
-  '/dashboard': typeof AuthenticatedDashboardRoute
   '/manage': typeof AuthenticatedManageRouteWithChildren
   '/messages': typeof AuthenticatedMessagesRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
@@ -229,6 +229,7 @@ export interface FileRoutesByFullPath {
   '/manage/members': typeof AuthenticatedManageMembersRoute
   '/manage/settings': typeof AuthenticatedManageSettingsRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
+  '/dashboard/': typeof AuthenticatedDashboardIndexRoute
   '/igrejas/': typeof AuthenticatedIgrejasIndexRoute
   '/manage/': typeof AuthenticatedManageIndexRoute
   '/api/public/webhooks/pagarme': typeof ApiPublicWebhooksPagarmeRoute
@@ -240,7 +241,6 @@ export interface FileRoutesByTo {
   '/redefinir-senha': typeof RedefinirSenhaRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
-  '/dashboard': typeof AuthenticatedDashboardRoute
   '/messages': typeof AuthenticatedMessagesRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/profile': typeof AuthenticatedProfileRoute
@@ -258,6 +258,7 @@ export interface FileRoutesByTo {
   '/manage/members': typeof AuthenticatedManageMembersRoute
   '/manage/settings': typeof AuthenticatedManageSettingsRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
+  '/dashboard': typeof AuthenticatedDashboardIndexRoute
   '/igrejas': typeof AuthenticatedIgrejasIndexRoute
   '/manage': typeof AuthenticatedManageIndexRoute
   '/api/public/webhooks/pagarme': typeof ApiPublicWebhooksPagarmeRoute
@@ -272,7 +273,6 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
-  '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/manage': typeof AuthenticatedManageRouteWithChildren
   '/_authenticated/messages': typeof AuthenticatedMessagesRoute
   '/_authenticated/notifications': typeof AuthenticatedNotificationsRoute
@@ -291,6 +291,7 @@ export interface FileRoutesById {
   '/_authenticated/manage/members': typeof AuthenticatedManageMembersRoute
   '/_authenticated/manage/settings': typeof AuthenticatedManageSettingsRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
+  '/_authenticated/dashboard/': typeof AuthenticatedDashboardIndexRoute
   '/_authenticated/igrejas/': typeof AuthenticatedIgrejasIndexRoute
   '/_authenticated/manage/': typeof AuthenticatedManageIndexRoute
   '/api/public/webhooks/pagarme': typeof ApiPublicWebhooksPagarmeRoute
@@ -305,7 +306,6 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/signup'
     | '/admin'
-    | '/dashboard'
     | '/manage'
     | '/messages'
     | '/notifications'
@@ -324,6 +324,7 @@ export interface FileRouteTypes {
     | '/manage/members'
     | '/manage/settings'
     | '/admin/'
+    | '/dashboard/'
     | '/igrejas/'
     | '/manage/'
     | '/api/public/webhooks/pagarme'
@@ -335,7 +336,6 @@ export interface FileRouteTypes {
     | '/redefinir-senha'
     | '/reset-password'
     | '/signup'
-    | '/dashboard'
     | '/messages'
     | '/notifications'
     | '/profile'
@@ -353,6 +353,7 @@ export interface FileRouteTypes {
     | '/manage/members'
     | '/manage/settings'
     | '/admin'
+    | '/dashboard'
     | '/igrejas'
     | '/manage'
     | '/api/public/webhooks/pagarme'
@@ -366,7 +367,6 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/signup'
     | '/_authenticated/admin'
-    | '/_authenticated/dashboard'
     | '/_authenticated/manage'
     | '/_authenticated/messages'
     | '/_authenticated/notifications'
@@ -385,6 +385,7 @@ export interface FileRouteTypes {
     | '/_authenticated/manage/members'
     | '/_authenticated/manage/settings'
     | '/_authenticated/admin/'
+    | '/_authenticated/dashboard/'
     | '/_authenticated/igrejas/'
     | '/_authenticated/manage/'
     | '/api/public/webhooks/pagarme'
@@ -509,13 +510,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedManageRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/dashboard': {
-      id: '/_authenticated/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
     '/_authenticated/admin': {
       id: '/_authenticated/admin'
       path: '/admin'
@@ -535,6 +529,13 @@ declare module '@tanstack/react-router' {
       path: '/igrejas'
       fullPath: '/igrejas/'
       preLoaderRoute: typeof AuthenticatedIgrejasIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/dashboard/': {
+      id: '/_authenticated/dashboard/'
+      path: '/dashboard'
+      fullPath: '/dashboard/'
+      preLoaderRoute: typeof AuthenticatedDashboardIndexRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/admin/': {
@@ -657,7 +658,6 @@ const AuthenticatedManageRouteWithChildren =
 
 interface AuthenticatedRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRouteWithChildren
-  AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedManageRoute: typeof AuthenticatedManageRouteWithChildren
   AuthenticatedMessagesRoute: typeof AuthenticatedMessagesRoute
   AuthenticatedNotificationsRoute: typeof AuthenticatedNotificationsRoute
@@ -666,12 +666,12 @@ interface AuthenticatedRouteChildren {
   AuthenticatedSuperAdminRoute: typeof AuthenticatedSuperAdminRoute
   AuthenticatedTicketsRoute: typeof AuthenticatedTicketsRoute
   AuthenticatedIgrejasOnboardingRoute: typeof AuthenticatedIgrejasOnboardingRoute
+  AuthenticatedDashboardIndexRoute: typeof AuthenticatedDashboardIndexRoute
   AuthenticatedIgrejasIndexRoute: typeof AuthenticatedIgrejasIndexRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRouteWithChildren,
-  AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedManageRoute: AuthenticatedManageRouteWithChildren,
   AuthenticatedMessagesRoute: AuthenticatedMessagesRoute,
   AuthenticatedNotificationsRoute: AuthenticatedNotificationsRoute,
@@ -680,6 +680,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedSuperAdminRoute: AuthenticatedSuperAdminRoute,
   AuthenticatedTicketsRoute: AuthenticatedTicketsRoute,
   AuthenticatedIgrejasOnboardingRoute: AuthenticatedIgrejasOnboardingRoute,
+  AuthenticatedDashboardIndexRoute: AuthenticatedDashboardIndexRoute,
   AuthenticatedIgrejasIndexRoute: AuthenticatedIgrejasIndexRoute,
 }
 
