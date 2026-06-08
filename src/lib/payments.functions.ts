@@ -266,8 +266,9 @@ export const createCreditCardPayment = createServerFn({ method: "POST" })
     if (!resolved.name) throw new Error("Nome do titular é obrigatório");
     if (!resolved.email) throw new Error("E-mail é obrigatório");
     if (!resolved.document) throw new Error("CPF ou CNPJ é obrigatório");
+    if (!validateDocument(resolved.document)) throw new Error("CPF ou CNPJ inválido");
     if (!data.billingAddress) throw new Error("Endereço de cobrança é obrigatório");
-    const customer = buildPagarmeCustomer(resolved, { allowAnonymous: false });
+    const customer = buildPagarmeCustomer(resolved);
 
     const json = await pagarmeFetch("/orders", {
       items: buildItems(totalAmount),
