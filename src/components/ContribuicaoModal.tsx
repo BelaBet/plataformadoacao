@@ -27,9 +27,9 @@ type Props = {
 const PRESETS = [10, 25, 50, 100, 200];
 
 const METHOD_COPY: Record<ContribMethod["key"], { title: string; subtitle: string; cta: string }> = {
-  pix:    { title: "Contribuir via Pix",          subtitle: "Qual valor você quer contribuir via Pix?",         cta: "Gerar Pix" },
-  boleto: { title: "Gerar Boleto",                subtitle: "Qual valor você quer contribuir via Boleto?",      cta: "Gerar Boleto" },
-  fatura: { title: "Contribuir com Cartão",       subtitle: "Qual valor você quer contribuir no cartão?",       cta: "Continuar no cartão" },
+  pix:    { title: "Contribuir via Pix",          subtitle: "Sua contribuição é processada com segurança. Não é necessário criar conta.",         cta: "Gerar QR Code PIX" },
+  boleto: { title: "Gerar Boleto",                subtitle: "Preencha seus dados para emissão do comprovante. Não é necessário criar conta.",     cta: "Gerar boleto" },
+  fatura: { title: "Contribuir com Cartão",       subtitle: "Preencha seus dados para emissão do comprovante. Não é necessário criar conta.",     cta: "Confirmar doação" },
   mais:   { title: "Escolher forma de pagamento", subtitle: "Qual valor você quer contribuir?",                 cta: "Continuar" },
   custom: { title: "Contribuir",                  subtitle: "Qual valor você quer contribuir?",                 cta: "Continuar" },
 };
