@@ -5,13 +5,7 @@ import {
   calculateAmounts,
   fetchSellerRecipientId,
 } from "./split.utils";
-
-const CustomerSchema = {
-  customerName: z.string().min(2).max(120),
-  customerEmail: z.string().email(),
-  customerDocument: z.string().min(8).max(20),
-  customerPhone: z.string().min(10).max(20),
-};
+import { buildPagarmeCustomer, resolveCustomer } from "./payments-customer";
 
 const OptionalCustomerSchema = {
   customerName: z.string().min(2).max(120).optional(),
@@ -19,29 +13,6 @@ const OptionalCustomerSchema = {
   customerDocument: z.string().min(8).max(20).optional(),
   customerPhone: z.string().min(10).max(20).optional(),
 };
-
-function parseBrPhone(raw: string) {
-  const digits = raw.replace(/\D/g, "");
-  const local = digits.startsWith("55") && digits.length > 11 ? digits.slice(2) : digits;
-  return { country_code: "55", area_code: local.slice(0, 2), number: local.slice(2) };
-}
-
-function buildCustomer(data: {
-  customerName?: string;
-  customerEmail?: string;
-  customerDocument?: string;
-  customerPhone?: string;
-}) {
-  const phone = parseBrPhone(data.customerPhone ?? "11900000000");
-  return {
-    name: data.customerName ?? "Contribuinte Anônimo",
-    email: data.customerEmail ?? "contribuinte@anonimo.com",
-    type: "individual",
-    document: (data.customerDocument ?? "00000000000").replace(/\D/g, ""),
-    document_type: "CPF",
-    phones: { mobile_phone: phone },
-  };
-}
 
 function buildItems(amountCents: number) {
   return [
