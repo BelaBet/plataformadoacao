@@ -5,7 +5,7 @@ import {
   calculateAmounts,
   fetchSellerRecipientId,
 } from "./split.utils";
-import { buildPagarmeCustomer, resolveCustomer } from "./payments-customer";
+import { buildPagarmeCustomer, resolveCustomer, validateDocument } from "./payments-customer";
 
 const OptionalCustomerSchema = {
   customerName: z.string().min(2).max(120).optional(),
@@ -142,10 +142,11 @@ export const createPixPayment = createServerFn({ method: "POST" })
 
     const resolved = await resolveCustomer(data);
     if (!resolved.document) throw new Error("CPF ou CNPJ é obrigatório");
+    if (!validateDocument(resolved.document)) throw new Error("CPF ou CNPJ inválido");
     if (!resolved.phone || resolved.phone.length < 10) {
       throw new Error("Celular é obrigatório");
     }
-    const customer = buildPagarmeCustomer(resolved, { allowAnonymous: false });
+    const customer = buildPagarmeCustomer(resolved);
 
     const json = await pagarmeFetch("/orders", {
       items: buildItems(totalAmount),
@@ -265,8 +266,9 @@ export const createCreditCardPayment = createServerFn({ method: "POST" })
     if (!resolved.name) throw new Error("Nome do titular é obrigatório");
     if (!resolved.email) throw new Error("E-mail é obrigatório");
     if (!resolved.document) throw new Error("CPF ou CNPJ é obrigatório");
+    if (!validateDocument(resolved.document)) throw new Error("CPF ou CNPJ inválido");
     if (!data.billingAddress) throw new Error("Endereço de cobrança é obrigatório");
-    const customer = buildPagarmeCustomer(resolved, { allowAnonymous: false });
+    const customer = buildPagarmeCustomer(resolved);
 
     const json = await pagarmeFetch("/orders", {
       items: buildItems(totalAmount),
