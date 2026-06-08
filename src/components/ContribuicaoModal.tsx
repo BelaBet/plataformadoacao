@@ -930,7 +930,7 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props)
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-medium text-[#6B7280]">CPF ou CNPJ{isPix && " (opcional)"}</label>
+                  <label className="text-xs font-medium text-[#6B7280]">CPF ou CNPJ</label>
                   <input
                     type="text"
                     inputMode="numeric"
