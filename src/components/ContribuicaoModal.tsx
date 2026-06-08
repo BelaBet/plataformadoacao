@@ -277,47 +277,42 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props)
     setSelected(PRESETS.includes(num) ? num : "custom");
   };
 
-  const validatePayer = (
-    opts: { optional?: boolean } = {},
-  ): { name: string; email: string; cpf: string; phone: string } | null => {
+  const validatePayer = (): { name: string; email: string; cpf: string; phone: string } | null => {
     const name = payerName.trim();
     const email = payerEmail.trim();
     const cpfDigits = payerCpf.replace(/\D/g, "");
     const phoneDigits = payerPhone.replace(/\D/g, "");
 
-    // CPF/CNPJ e celular são obrigatórios em todos os métodos.
-    if (cpfDigits.length !== 11 && cpfDigits.length !== 14) {
-      setError("Informe um CPF (11 dígitos) ou CNPJ (14 dígitos).");
+    if (!name) {
+      setError("Informe seu nome");
       return null;
     }
-    if (cpfDigits.length === 11 && !isValidCPF(cpfDigits)) {
-      setError("CPF inválido. Verifique os dígitos.");
-      return null;
-    }
-    if (cpfDigits.length === 14 && !isValidCNPJ(cpfDigits)) {
-      setError("CNPJ inválido. Verifique os dígitos.");
-      return null;
-    }
-    if (phoneDigits.length < 10 || phoneDigits.length > 11) {
-      setError("Informe um celular válido com DDD.");
-      return null;
-    }
-
-    if (opts.optional) {
-      // PIX: nome e e-mail opcionais; CPF/CNPJ e celular obrigatórios.
-      if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-        setError("Informe um e-mail válido ou deixe em branco.");
-        return null;
-      }
-      return { name, email, cpf: cpfDigits, phone: phoneDigits };
-    }
-
-    if (name.length < 2) {
-      setError("Informe o nome completo do pagador.");
+    if (!email) {
+      setError("Informe seu e-mail");
       return null;
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       setError("Informe um e-mail válido.");
+      return null;
+    }
+    if (!cpfDigits) {
+      setError("Informe seu CPF ou CNPJ");
+      return null;
+    }
+    if (cpfDigits.length !== 11 && cpfDigits.length !== 14) {
+      setError("Informe um CPF (11 dígitos) ou CNPJ (14 dígitos)");
+      return null;
+    }
+    if (cpfDigits.length === 11 && !isValidCPF(cpfDigits)) {
+      setError("CPF inválido. Verifique os números e tente novamente");
+      return null;
+    }
+    if (cpfDigits.length === 14 && !isValidCNPJ(cpfDigits)) {
+      setError("CNPJ inválido. Verifique os números e tente novamente");
+      return null;
+    }
+    if (phoneDigits && (phoneDigits.length < 10 || phoneDigits.length > 11)) {
+      setError("Informe um celular válido com DDD ou deixe em branco.");
       return null;
     }
     return { name, email, cpf: cpfDigits, phone: phoneDigits };
