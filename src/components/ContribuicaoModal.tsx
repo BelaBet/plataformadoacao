@@ -901,36 +901,43 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props)
               <div className="mt-5 space-y-2.5">
                 {isPix && (
                   <div className="rounded-xl border border-[#FCD34D] bg-[#FEF3C7] px-3 py-2 text-xs text-[#92400E]">
-                    <strong>Atenção:</strong> apenas o celular é obrigatório no Pix —
-                    usaremos esse número para enviar o comprovante via WhatsApp.
-                    Nome, e-mail e CPF são opcionais.
+                    <strong>Identificar doação (opcional):</strong> nome, e-mail, CPF/CNPJ
+                    e telefone são opcionais para Pix. Doações anônimas são permitidas.
                   </div>
                 )}
 
                 <div>
-                  <label className="text-xs font-medium text-[#6B7280]">Nome completo{isPix && " (opcional)"}</label>
+                  <label className="flex items-center gap-1 text-xs font-medium text-[#6B7280]">
+                    Nome completo{isPix && " (opcional)"}
+                    {lockName && <Lock className="h-3 w-3" />}
+                  </label>
                   <input
                     type="text"
                     value={payerName}
                     onChange={(e) => setPayerName(e.target.value)}
+                    readOnly={lockName}
                     maxLength={120}
                     placeholder="Como aparece no documento"
-                    className="mt-1 h-11 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm text-[#111827] outline-none focus:border-[#7C3AED]"
+                    className={`mt-1 h-11 w-full rounded-xl border border-[#E5E7EB] px-3 text-sm text-[#111827] outline-none focus:border-[#7C3AED] ${lockName ? "bg-gray-50" : "bg-white"}`}
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-medium text-[#6B7280]">E-mail{isPix && " (opcional)"}</label>
+                  <label className="flex items-center gap-1 text-xs font-medium text-[#6B7280]">
+                    E-mail{isPix && " (opcional)"}
+                    {lockEmail && <Lock className="h-3 w-3" />}
+                  </label>
                   <input
                     type="email"
                     value={payerEmail}
                     onChange={(e) => setPayerEmail(e.target.value)}
+                    readOnly={lockEmail}
                     maxLength={255}
                     placeholder="seu@email.com"
-                    className="mt-1 h-11 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm text-[#111827] outline-none focus:border-[#7C3AED]"
+                    className={`mt-1 h-11 w-full rounded-xl border border-[#E5E7EB] px-3 text-sm text-[#111827] outline-none focus:border-[#7C3AED] ${lockEmail ? "bg-gray-50" : "bg-white"}`}
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-medium text-[#6B7280]">CPF{isPix && " (opcional)"}</label>
+                  <label className="text-xs font-medium text-[#6B7280]">CPF ou CNPJ{isPix && " (opcional)"}</label>
                   <input
                     type="text"
                     inputMode="numeric"
@@ -941,13 +948,15 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props)
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-medium text-[#6B7280]">
-                    Celular (WhatsApp){isPix && <span className="text-[#DC2626]"> *obrigatório</span>}
+                  <label className="flex items-center gap-1 text-xs font-medium text-[#6B7280]">
+                    Celular (WhatsApp){isPix && " (opcional)"}
+                    {lockPhone && <Lock className="h-3 w-3" />}
                   </label>
                   <input
                     type="tel"
                     inputMode="numeric"
                     value={payerPhone}
+                    readOnly={lockPhone}
                     onChange={(e) => {
                       const d = e.target.value.replace(/\D/g, "").slice(0, 11);
                       const formatted =
@@ -961,7 +970,7 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props)
                       setPayerPhone(formatted);
                     }}
                     placeholder="(11) 99999-9999"
-                    className="mt-1 h-11 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm text-[#111827] outline-none focus:border-[#7C3AED]"
+                    className={`mt-1 h-11 w-full rounded-xl border border-[#E5E7EB] px-3 text-sm text-[#111827] outline-none focus:border-[#7C3AED] ${lockPhone ? "bg-gray-50" : "bg-white"}`}
                   />
                 </div>
               </div>
