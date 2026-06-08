@@ -1,9 +1,14 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import {
+  buildSplitPayload,
+  calculateAmounts,
+  fetchSellerRecipientId,
+} from "./split.utils";
 
 const InputSchema = z.object({
   tenantId: z.string().uuid(),
-  amount: z.number().positive().max(1_000_000),
+  donationAmount: z.number().int().positive().max(100_000_000),
   customerName: z.string().min(1).max(120).optional(),
   customerEmail: z.string().email().optional(),
   customerDocument: z.string().min(8).max(20).optional(),
@@ -35,13 +40,15 @@ export const createBoletoPayment = createServerFn({ method: "POST" })
     const secretKey = process.env.PAGARME_SECRET_KEY;
     if (!secretKey) throw new Error("PAGARME_SECRET_KEY não configurada");
 
-    const amountCents = Math.round(data.amount * 100);
+    const sellerRecipientId = await fetchSellerRecipientId(data.tenantId);
+    const { donationAmount, tickettoFee, totalAmount } = calculateAmounts(data.donationAmount);
+    const platformRecipientId = process.env.PLATFORM_RECIPIENT_ID;
     const dueAt = addBusinessDays(new Date(), 3).toISOString();
 
     const orderPayload = {
       items: [
         {
-          amount: amountCents,
+          amount: totalAmount,
           description: "Contribuição",
           quantity: 1,
           code: "CONTRIB",
@@ -62,6 +69,7 @@ export const createBoletoPayment = createServerFn({ method: "POST" })
             due_at: dueAt,
             instructions: "Obrigado pela sua contribuição!",
           },
+          split: buildSplitPayload(donationAmount, tickettoFee, sellerRecipientId),
         },
       ],
     };
@@ -102,12 +110,18 @@ export const createBoletoPayment = createServerFn({ method: "POST" })
       .from("payments")
       .insert({
         tenant_id: data.tenantId,
-        amount: data.amount,
+        amount: totalAmount / 100,
         method: "boleto",
         status: "pending",
         gateway_id: gatewayId,
         reference_type: "donation",
-      })
+        donation_amount: donationAmount,
+        ticketto_fee: tickettoFee,
+        split_platform_amount: tickettoFee,
+        split_seller_amount: donationAmount,
+        platform_recipient_id: platformRecipientId,
+        seller_recipient_id: sellerRecipientId,
+      } as any)
       .select("id")
       .single();
     if (payErr || !payment) throw new Error(payErr?.message ?? "Falha ao registrar pagamento");
@@ -116,7 +130,7 @@ export const createBoletoPayment = createServerFn({ method: "POST" })
       .from("donations")
       .insert({
         tenant_id: data.tenantId,
-        amount: data.amount,
+        amount: donationAmount / 100,
         payment_id: payment.id,
       })
       .select("id")
@@ -136,5 +150,8 @@ export const createBoletoPayment = createServerFn({ method: "POST" })
       pdfUrl,
       dueAt,
       gatewayId,
+      donationAmount,
+      tickettoFee,
+      totalAmount,
     };
   });
