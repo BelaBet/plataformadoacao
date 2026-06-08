@@ -1022,12 +1022,17 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props)
                     onChange={(e) => setInstallments(Number(e.target.value))}
                     className="mt-1 h-11 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm text-[#111827] outline-none focus:border-[#7C3AED]"
                   >
-                    {Array.from({ length: 12 }, (_, i) => i + 1).map((n) => (
-                      <option key={n} value={n}>
-                        {n}x de R$ {(Number(value || 0) / n).toFixed(2).replace(".", ",")}
-                        {n === 1 ? " (à vista)" : ""}
-                      </option>
-                    ))}
+                    {Array.from({ length: 12 }, (_, i) => i + 1).map((n) => {
+                      const cents = Number(value || 0) > 0
+                        ? calculateAmounts(Math.round(Number(value) * 100)).totalAmount
+                        : 0;
+                      return (
+                        <option key={n} value={n}>
+                          {n}x de R$ {formatBRL(Math.round(cents / n))}
+                          {n === 1 ? " (à vista)" : ""}
+                        </option>
+                      );
+                    })}
                   </select>
                 </div>
 
@@ -1086,6 +1091,26 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props)
             )}
 
 
+
+            {Number(value) > 0 && (() => {
+              const { tickettoFee, totalAmount } = calculateAmounts(Math.round(Number(value) * 100));
+              return (
+                <div className="mt-5 rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] p-3 text-sm">
+                  <div className="flex items-center justify-between text-[#6B7280]">
+                    <span>Valor da contribuição</span>
+                    <span className="font-medium text-[#111827]">R$ {formatBRL(Math.round(Number(value) * 100))}</span>
+                  </div>
+                  <div className="mt-1 flex items-center justify-between text-[#6B7280]">
+                    <span>Taxa de serviço (3,5%)</span>
+                    <span className="font-medium text-[#111827]">R$ {formatBRL(tickettoFee)}</span>
+                  </div>
+                  <div className="mt-2 border-t border-[#E5E7EB] pt-2 flex items-center justify-between">
+                    <span className="font-semibold text-[#111827]">Total cobrado</span>
+                    <span className="text-base font-bold text-[#7C3AED]">R$ {formatBRL(totalAmount)}</span>
+                  </div>
+                </div>
+              );
+            })()}
 
             <div className="mt-5 flex items-center justify-center gap-1.5 text-xs text-[#6B7280]">
               <Lock className="h-3.5 w-3.5" />
