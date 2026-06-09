@@ -305,6 +305,13 @@ function OnboardingPage() {
         tagline: tenantRow.tagline ?? "",
         logo_url: tenantRow.logo_url ?? null,
       });
+      // Invalida caches do tenant para que a logo/cores apareçam imediatamente
+      // na home "/" e no header sem reload manual.
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["home-tenant"] }),
+        queryClient.invalidateQueries({ queryKey: ["my-tenant"] }),
+        queryClient.invalidateQueries({ queryKey: ["my-tenant-header"] }),
+      ]);
       toast.success("Igreja cadastrada e verificada com sucesso!");
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Não foi possível concluir o cadastro.";
