@@ -144,6 +144,7 @@ function OnboardingPage() {
   const [savedTenant, setSavedTenant] = useState<{ name: string; tagline: string; logo_url: string | null } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const submitChurch = useServerFn(updateChurchIdentity);
+  const queryClient = useQueryClient();
 
   const meta = (user?.user_metadata ?? {}) as Record<string, string | undefined>;
   const prefilledDoc = (meta.document ?? "").replace(/\D/g, "");
