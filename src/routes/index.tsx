@@ -707,6 +707,7 @@ function ChurchPage() {
 export function ChurchPageView({ tenantOverride }: { tenantOverride?: Tenant | null } = {}) {
   const [copied, setCopied] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [logoError, setLogoError] = useState(false);
   const { tenant: ctxTenant } = useTenant();
   const { profile } = useAuth();
   const { theme } = useChurchTheme();
@@ -800,10 +801,11 @@ export function ChurchPageView({ tenantOverride }: { tenantOverride?: Tenant | n
         }}
       >
         <div style={{ maxWidth: 1200, margin: "0 auto", padding: "14px 24px", display: "flex", alignItems: "center", gap: 10 }}>
-          {CHURCH.logo ? (
+          {CHURCH.logo && !logoError ? (
             <img
               src={CHURCH.logo}
               alt={CHURCH.name}
+              onError={() => setLogoError(true)}
               style={{ width: 32, height: 32, borderRadius: 999, objectFit: "cover", background: "#fff" }}
             />
           ) : (
@@ -813,7 +815,7 @@ export function ChurchPageView({ tenantOverride }: { tenantOverride?: Tenant | n
                 height: 32,
                 borderRadius: 999,
                 background: primary,
-                color: "#fff",
+                color: secondary || "#fff",
                 display: "grid",
                 placeItems: "center",
                 fontSize: 12,
@@ -884,10 +886,11 @@ export function ChurchPageView({ tenantOverride }: { tenantOverride?: Tenant | n
         <div className="fade-up relative mx-auto max-w-3xl flex flex-col items-center">
           {/* Logo da empresa quando houver, sen\u00e3o iniciais */}
           <div className="mb-1 sm:mb-6">
-            {CHURCH.logo ? (
+            {CHURCH.logo && !logoError ? (
               <img
                 src={CHURCH.logo}
                 alt={CHURCH.name}
+                onError={() => setLogoError(true)}
                 className="mx-auto rounded-full w-11 h-11 sm:w-24 sm:h-24 object-cover bg-white"
                 style={{ border: `2px solid ${accent}` }}
               />
@@ -895,8 +898,8 @@ export function ChurchPageView({ tenantOverride }: { tenantOverride?: Tenant | n
               <div
                 className="mx-auto grid place-items-center rounded-full w-11 h-11 sm:w-24 sm:h-24 text-sm sm:text-3xl font-extrabold"
                 style={{
-                  background: "#fff",
-                  color: primary,
+                  background: primary,
+                  color: secondary || "#fff",
                   border: `2px solid ${accent}`,
                 }}
               >
@@ -1033,10 +1036,11 @@ export function ChurchPageView({ tenantOverride }: { tenantOverride?: Tenant | n
       {/* ── FOOTER ─────────────────────────────────────────────────────── */}
       <footer style={{ padding: "48px 24px", textAlign: "center", background: "#fafaf7", borderTop: "1px solid #eee" }}>
 
-        {CHURCH.logo ? (
+        {CHURCH.logo && !logoError ? (
           <img
             src={CHURCH.logo}
             alt={CHURCH.name}
+            onError={() => setLogoError(true)}
             style={{ width: 48, height: 48, borderRadius: 999, objectFit: "cover", background: "#fff", margin: "0 auto 12px", display: "block" }}
           />
         ) : (
@@ -1046,7 +1050,7 @@ export function ChurchPageView({ tenantOverride }: { tenantOverride?: Tenant | n
               height: 48,
               borderRadius: 999,
               background: primary,
-              color: "#fff",
+              color: secondary || "#fff",
               display: "grid",
               placeItems: "center",
               margin: "0 auto 12px",
