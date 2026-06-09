@@ -162,3 +162,43 @@ function StatCard({ icon, label, value }: { icon: React.ReactNode; label: string
     </Card>
   );
 }
+
+function TenantRowItem({ tenant }: { tenant: TenantRow }) {
+  const qc = useQueryClient();
+  const mutation = useMutation({
+    mutationFn: async (active: boolean) => {
+      const { error } = await supabase.from("tenants").update({ active }).eq("id", tenant.id);
+      if (error) throw error;
+    },
+    onSuccess: (_d, active) => {
+      toast.success(active ? "Igreja ativada" : "Igreja desativada");
+      qc.invalidateQueries({ queryKey: ["super-admin", "tenants"] });
+    },
+    onError: (e) => toast.error(translateError(e)),
+  });
+
+  return (
+    <div className="flex items-center justify-between rounded-lg border bg-card px-3 py-2">
+      <div className="flex items-center gap-3 min-w-0">
+        <div className="h-9 w-9 shrink-0 overflow-hidden rounded-md border bg-primary text-primary-foreground text-xs font-medium grid place-items-center">
+          {initials(tenant.name)}
+        </div>
+        <div className="min-w-0">
+          <div className="truncate text-sm font-medium">{tenant.name}</div>
+          <div className="truncate text-xs text-muted-foreground">/{tenant.slug}</div>
+        </div>
+      </div>
+      <div className="flex items-center gap-3">
+        <Badge variant={tenant.active ? "default" : "secondary"}>
+          {tenant.active ? "Ativa" : "Inativa"}
+        </Badge>
+        <Switch
+          checked={tenant.active}
+          disabled={mutation.isPending}
+          onCheckedChange={(v) => mutation.mutate(v)}
+          aria-label="Ativar igreja"
+        />
+      </div>
+    </div>
+  );
+}
