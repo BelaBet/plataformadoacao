@@ -183,7 +183,7 @@ export const createPixPayment = createServerFn({ method: "POST" })
     const ids = await persistPayment({
       tenantId: data.tenantId,
       donationAmount,
-      tickettoFee,
+      tickettoFee: tickettoFee + pixFixedFee,
       totalAmount,
       sellerRecipientId,
       method: "pix",
