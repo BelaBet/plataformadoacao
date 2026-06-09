@@ -33,6 +33,9 @@ import { QRCodeCanvas } from "qrcode.react";
 import { buildPixPayload } from "@/lib/pix";
 import { useTenant, type Tenant } from "@/lib/tenant-context";
 import { useChurchTheme } from "@/lib/theme";
+import { useAuth } from "@/lib/auth-context";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/")({
   component: ChurchPage,
