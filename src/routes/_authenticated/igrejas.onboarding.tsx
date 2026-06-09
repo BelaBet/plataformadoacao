@@ -11,6 +11,7 @@ import { cpf, cnpj } from "cpf-cnpj-validator";
 import { useServerFn } from "@tanstack/react-start";
 import { updateChurchIdentity } from "@/lib/church.functions";
 import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
 
 export const Route = createFileRoute("/_authenticated/igrejas/onboarding")({
   component: OnboardingGate,
