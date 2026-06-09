@@ -724,7 +724,7 @@ export function ChurchPageView({ tenantOverride }: { tenantOverride?: Tenant | n
     queryFn: async () => {
       const { data } = await supabase
         .from("tenants")
-        .select("id,name,tagline,logo_url,primary_color,secondary_color,accent_color")
+        .select("id,slug,name,tagline,logo_url,primary_color,secondary_color,accent_color")
         .eq("id", profile!.tenant_id)
         .maybeSingle();
       return data;
