@@ -1133,7 +1133,7 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props)
 
             {Number(value) > 0 && (() => {
               const methodForCalc: import("@/lib/split.utils").PaymentMethod = isPix ? "pix" : isCard ? "credit_card" : "boleto";
-              const { tickettoFee, pixFixedFee, totalAmount } = calculateAmounts(Math.round(Number(value) * 100), methodForCalc);
+              const { totalAmount } = calculateAmounts(Math.round(Number(value) * 100), methodForCalc);
               return (
                 <div className="mt-5 rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] p-3 text-sm">
                   <div className="flex items-center justify-between text-[#6B7280]">
@@ -1141,15 +1141,8 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props)
                     <span className="font-medium text-[#111827]">R$ {formatBRL(Math.round(Number(value) * 100))}</span>
                   </div>
                   <div className="mt-1 flex items-center justify-between text-[#6B7280]">
-                    <span>Taxa de Administrativa (3,5%)</span>
-                    <span className="font-medium text-[#111827]">R$ {formatBRL(tickettoFee)}</span>
+                    <span>Taxa de Administrativa</span>
                   </div>
-                  {isPix && pixFixedFee > 0 && (
-                    <div className="mt-1 flex items-center justify-between text-[#6B7280]">
-                      <span>Taxa fixa PIX</span>
-                      <span className="font-medium text-[#111827]">R$ {formatBRL(pixFixedFee)}</span>
-                    </div>
-                  )}
                   <div className="mt-2 border-t border-[#E5E7EB] pt-2 flex items-center justify-between">
                     <span className="font-semibold text-[#111827]">Total cobrado</span>
                     <span className="text-base font-bold text-[#7C3AED]">R$ {formatBRL(totalAmount)}</span>
