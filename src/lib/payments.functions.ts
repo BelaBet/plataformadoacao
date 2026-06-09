@@ -160,7 +160,7 @@ export const createPixPayment = createServerFn({ method: "POST" })
               { name: "Contribuição", value: resolved.name ?? "Anônimo" },
             ],
           },
-          split: buildSplitPayload(donationAmount, tickettoFee, sellerRecipientId),
+          split: buildSplitPayload(donationAmount, tickettoFee, sellerRecipientId, pixFixedFee),
         },
       ],
     });
