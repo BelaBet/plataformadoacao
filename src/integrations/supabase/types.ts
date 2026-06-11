@@ -476,6 +476,7 @@ export type Database = {
       payments: {
         Row: {
           amount: number
+          card_brand: string | null
           created_at: string
           deleted_at: string | null
           deleted_by: string | null
@@ -486,6 +487,7 @@ export type Database = {
           gateway_response: Json | null
           id: string
           method: Database["public"]["Enums"]["payment_method"]
+          pagarme_fee: number | null
           platform_recipient_id: string | null
           profile_id: string | null
           reference_id: string | null
@@ -496,9 +498,12 @@ export type Database = {
           status: Database["public"]["Enums"]["payment_status"]
           tenant_id: string
           ticketto_fee: number | null
+          tk2_op_fee: number | null
+          transacao_fee: number | null
         }
         Insert: {
           amount: number
+          card_brand?: string | null
           created_at?: string
           deleted_at?: string | null
           deleted_by?: string | null
@@ -509,6 +514,7 @@ export type Database = {
           gateway_response?: Json | null
           id?: string
           method: Database["public"]["Enums"]["payment_method"]
+          pagarme_fee?: number | null
           platform_recipient_id?: string | null
           profile_id?: string | null
           reference_id?: string | null
@@ -521,9 +527,12 @@ export type Database = {
           status?: Database["public"]["Enums"]["payment_status"]
           tenant_id: string
           ticketto_fee?: number | null
+          tk2_op_fee?: number | null
+          transacao_fee?: number | null
         }
         Update: {
           amount?: number
+          card_brand?: string | null
           created_at?: string
           deleted_at?: string | null
           deleted_by?: string | null
@@ -534,6 +543,7 @@ export type Database = {
           gateway_response?: Json | null
           id?: string
           method?: Database["public"]["Enums"]["payment_method"]
+          pagarme_fee?: number | null
           platform_recipient_id?: string | null
           profile_id?: string | null
           reference_id?: string | null
@@ -546,6 +556,8 @@ export type Database = {
           status?: Database["public"]["Enums"]["payment_status"]
           tenant_id?: string
           ticketto_fee?: number | null
+          tk2_op_fee?: number | null
+          transacao_fee?: number | null
         }
         Relationships: [
           {

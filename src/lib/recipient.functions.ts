@@ -213,10 +213,61 @@ export const getPlatformFeeRevenue = createServerFn({ method: "POST" })
     if (!pr) throw new Error("Acesso restrito à plataforma");
     const { data, error } = await supabaseAdmin
       .from("payments")
-      .select("ticketto_fee")
-      .eq("status", "confirmed");
+      .select("ticketto_fee, pagarme_fee, tk2_op_fee, transacao_fee, split_platform_amount, split_seller_amount, seller_recipient_id")
+      .in("status", ["paid", "confirmed"] as any)
+      .is("deleted_at", null);
     if (error) throw new Error(error.message);
-    const rows = (data ?? []) as Array<{ ticketto_fee: number | null }>;
-    const total = rows.reduce((s, r) => s + (r.ticketto_fee ?? 0), 0);
-    return { totalFeeCents: total, count: rows.length };
+    type Row = {
+      ticketto_fee: number | null;
+      pagarme_fee: number | null;
+      tk2_op_fee: number | null;
+      transacao_fee: number | null;
+      split_platform_amount: number | null;
+      split_seller_amount: number | null;
+      seller_recipient_id: string | null;
+    };
+    const rows = (data ?? []) as Row[];
+    const totals = rows.reduce(
+      (acc, r) => {
+        acc.tickettoRevenue += r.ticketto_fee ?? 0;
+        acc.pagarmeAbsorbed += r.pagarme_fee ?? 0;
+        acc.tk2OpRevenue += r.tk2_op_fee ?? 0;
+        acc.transacaoAbsorbed += r.transacao_fee ?? 0;
+        acc.totalPlatform += r.split_platform_amount ?? 0;
+        acc.totalSeller += r.split_seller_amount ?? 0;
+        return acc;
+      },
+      {
+        tickettoRevenue: 0,
+        pagarmeAbsorbed: 0,
+        tk2OpRevenue: 0,
+        transacaoAbsorbed: 0,
+        totalPlatform: 0,
+        totalSeller: 0,
+      },
+    );
+    const bySellerMap = new Map<string, { sellerRecipientId: string; tickettoRevenue: number; tk2OpRevenue: number; totalPlatform: number; totalSeller: number; count: number }>();
+    for (const r of rows) {
+      const k = r.seller_recipient_id ?? "—";
+      const cur = bySellerMap.get(k) ?? {
+        sellerRecipientId: k,
+        tickettoRevenue: 0,
+        tk2OpRevenue: 0,
+        totalPlatform: 0,
+        totalSeller: 0,
+        count: 0,
+      };
+      cur.tickettoRevenue += r.ticketto_fee ?? 0;
+      cur.tk2OpRevenue += r.tk2_op_fee ?? 0;
+      cur.totalPlatform += r.split_platform_amount ?? 0;
+      cur.totalSeller += r.split_seller_amount ?? 0;
+      cur.count += 1;
+      bySellerMap.set(k, cur);
+    }
+    return {
+      totalFeeCents: totals.tickettoRevenue,
+      count: rows.length,
+      breakdown: totals,
+      bySeller: Array.from(bySellerMap.values()),
+    };
   });
