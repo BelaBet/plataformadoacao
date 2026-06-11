@@ -155,6 +155,19 @@ export function buildSplitPayload(
 }
 
 /**
+ * Compat: usado pela UI para estimar o total cobrado.
+ * Para cartão usa parcelamento à vista com bandeira master/visa como padrão.
+ */
+export function calculateAmounts(
+  donationAmount: number,
+  method: PaymentMethod = "pix",
+): SplitAmounts {
+  if (method === "pix") return calculatePixAmounts(donationAmount);
+  if (method === "boleto") return calculateBoletoAmounts(donationAmount);
+  return calculateCardAmounts(donationAmount, 1, "master_visa");
+}
+
+/**
  * Busca o pagarme_recipient_id de um tenant.
  * Lança erro caso não esteja configurado.
  */
