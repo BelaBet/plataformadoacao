@@ -942,6 +942,7 @@ export type Database = {
           logo_url: string | null
           name: string
           primary_color: string | null
+          recipient_id: string | null
           secondary_color: string | null
           slug: string
           tagline: string | null
@@ -960,6 +961,7 @@ export type Database = {
           logo_url?: string | null
           name: string
           primary_color?: string | null
+          recipient_id?: string | null
           secondary_color?: string | null
           slug: string
           tagline?: string | null
@@ -978,6 +980,7 @@ export type Database = {
           logo_url?: string | null
           name?: string
           primary_color?: string | null
+          recipient_id?: string | null
           secondary_color?: string | null
           slug?: string
           tagline?: string | null
