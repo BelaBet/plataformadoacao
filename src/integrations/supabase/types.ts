@@ -107,6 +107,75 @@ export type Database = {
           },
         ]
       }
+      cost_centers: {
+        Row: {
+          allows_installments: boolean
+          created_at: string
+          description: string | null
+          display_order: number
+          id: string
+          is_active: boolean
+          max_installments: number
+          name: string
+          qr_code_url: string | null
+          slug: string
+          split_platform_percent: number
+          split_seller_percent: number
+          tenant_id: string
+          type: Database["public"]["Enums"]["cost_center_type"]
+          updated_at: string
+        }
+        Insert: {
+          allows_installments?: boolean
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          max_installments?: number
+          name: string
+          qr_code_url?: string | null
+          slug: string
+          split_platform_percent?: number
+          split_seller_percent?: number
+          tenant_id: string
+          type?: Database["public"]["Enums"]["cost_center_type"]
+          updated_at?: string
+        }
+        Update: {
+          allows_installments?: boolean
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          max_installments?: number
+          name?: string
+          qr_code_url?: string | null
+          slug?: string
+          split_platform_percent?: number
+          split_seller_percent?: number
+          tenant_id?: string
+          type?: Database["public"]["Enums"]["cost_center_type"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cost_centers_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cost_centers_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       donations: {
         Row: {
           admin_fee: number | null
@@ -558,6 +627,7 @@ export type Database = {
         Row: {
           amount: number
           card_brand: string | null
+          cost_center_id: string | null
           created_at: string
           deleted_at: string | null
           deleted_by: string | null
@@ -585,6 +655,7 @@ export type Database = {
         Insert: {
           amount: number
           card_brand?: string | null
+          cost_center_id?: string | null
           created_at?: string
           deleted_at?: string | null
           deleted_by?: string | null
@@ -614,6 +685,7 @@ export type Database = {
         Update: {
           amount?: number
           card_brand?: string | null
+          cost_center_id?: string | null
           created_at?: string
           deleted_at?: string | null
           deleted_by?: string | null
@@ -641,6 +713,20 @@ export type Database = {
           transacao_fee?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "payments_cost_center_id_fkey"
+            columns: ["cost_center_id"]
+            isOneToOne: false
+            referencedRelation: "cost_centers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_cost_center_id_fkey"
+            columns: ["cost_center_id"]
+            isOneToOne: false
+            referencedRelation: "cost_centers_public"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "payments_profile_id_fkey"
             columns: ["profile_id"]
@@ -1201,6 +1287,57 @@ export type Database = {
       }
     }
     Views: {
+      cost_centers_public: {
+        Row: {
+          allows_installments: boolean | null
+          description: string | null
+          display_order: number | null
+          id: string | null
+          max_installments: number | null
+          name: string | null
+          slug: string | null
+          tenant_id: string | null
+          type: Database["public"]["Enums"]["cost_center_type"] | null
+        }
+        Insert: {
+          allows_installments?: boolean | null
+          description?: string | null
+          display_order?: number | null
+          id?: string | null
+          max_installments?: number | null
+          name?: string | null
+          slug?: string | null
+          tenant_id?: string | null
+          type?: Database["public"]["Enums"]["cost_center_type"] | null
+        }
+        Update: {
+          allows_installments?: boolean | null
+          description?: string | null
+          display_order?: number | null
+          id?: string | null
+          max_installments?: number | null
+          name?: string | null
+          slug?: string | null
+          tenant_id?: string | null
+          type?: Database["public"]["Enums"]["cost_center_type"] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cost_centers_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cost_centers_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subscription_plans_public: {
         Row: {
           active: boolean | null
@@ -1299,6 +1436,7 @@ export type Database = {
     Enums: {
       api_service: "sms" | "whatsapp" | "payments"
       app_role: "member" | "manager" | "admin"
+      cost_center_type: "online" | "presencial" | "totem"
       event_status: "draft" | "active" | "closed"
       event_type: "event" | "campaign" | "donation"
       invoice_status:
@@ -1452,6 +1590,7 @@ export const Constants = {
     Enums: {
       api_service: ["sms", "whatsapp", "payments"],
       app_role: ["member", "manager", "admin"],
+      cost_center_type: ["online", "presencial", "totem"],
       event_status: ["draft", "active", "closed"],
       event_type: ["event", "campaign", "donation"],
       invoice_status: [
