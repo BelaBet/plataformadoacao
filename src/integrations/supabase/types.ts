@@ -1306,34 +1306,31 @@ export type Database = {
     Views: {
       cost_centers_public: {
         Row: {
-          allows_installments: boolean | null
           description: string | null
           display_order: number | null
           id: string | null
-          max_installments: number | null
           name: string | null
+          qr_code_url: string | null
           slug: string | null
           tenant_id: string | null
           type: Database["public"]["Enums"]["cost_center_type"] | null
         }
         Insert: {
-          allows_installments?: boolean | null
           description?: string | null
           display_order?: number | null
           id?: string | null
-          max_installments?: number | null
           name?: string | null
+          qr_code_url?: string | null
           slug?: string | null
           tenant_id?: string | null
           type?: Database["public"]["Enums"]["cost_center_type"] | null
         }
         Update: {
-          allows_installments?: boolean | null
           description?: string | null
           display_order?: number | null
           id?: string | null
-          max_installments?: number | null
           name?: string | null
+          qr_code_url?: string | null
           slug?: string | null
           tenant_id?: string | null
           type?: Database["public"]["Enums"]["cost_center_type"] | null
