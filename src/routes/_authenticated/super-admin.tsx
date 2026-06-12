@@ -95,14 +95,17 @@ function SuperAdminPage() {
 
   return (
     <div className="mx-auto max-w-6xl space-y-6 p-4 sm:p-6">
-      <header className="flex flex-wrap items-center justify-between gap-3">
+      <header className="flex flex-wrap items-center justify-between gap-3 border-b pb-4">
         <div className="flex items-center gap-3">
           <div className="rounded-xl bg-amber-500/15 p-2 text-amber-600">
             <Crown className="h-6 w-6" />
           </div>
           <div>
-            <h1 className="font-display text-2xl">Painel Super Admin</h1>
-            <p className="text-sm text-muted-foreground">Visão global da plataforma</p>
+            <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+              TK2 Empreendimentos
+            </p>
+            <h1 className="font-display text-2xl leading-tight">Plataforma de igrejas</h1>
+            <p className="text-sm text-muted-foreground">Gestão das igrejas administradas pela plataforma</p>
           </div>
         </div>
         <Button asChild variant="outline" size="sm">

@@ -1123,23 +1123,17 @@ export function ChurchPageView({ tenantOverride }: { tenantOverride?: Tenant | n
           </div>
         )}
 
-        <p style={{ fontFamily: "'Playfair Display', serif", fontSize: 16, color: primary, margin: "0 0 8px" }}>
+        <p style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, color: primary, margin: "0 0 4px", fontWeight: 600 }}>
           {CHURCH.name}
         </p>
-        <p style={{ fontSize: 13, color: "#444", margin: "0 0 6px", fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase" }}>
-          TK2 Empreendimentos
-        </p>
-        <p style={{ fontSize: 12, color: "#999", margin: 0 }}>
-          Plataforma gerenciada pela{" "}
-          <a
-            href="https://ankor.tech"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="donate-link"
-            style={{ color: accent, fontWeight: 600, textDecoration: "none" }}
-          >
-            TK2 Prosperidade
-          </a>
+        {CHURCH.tagline && (
+          <p style={{ fontSize: 12, color: "#666", margin: "0 0 16px" }}>
+            {CHURCH.tagline}
+          </p>
+        )}
+        <p style={{ fontSize: 11, color: "#999", margin: 0, letterSpacing: "0.04em" }}>
+          Tecnologia fornecida por{" "}
+          <span style={{ color: "#666", fontWeight: 600 }}>TK2 EMPREENDIMENTOS</span>
         </p>
       </footer>
     </div>
