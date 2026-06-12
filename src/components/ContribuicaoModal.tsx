@@ -380,6 +380,7 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method, costCent
           },
         });
 
+        console.log("[pix] createPix result", result);
         if (!result.gatewayId) throw new Error("Pagar.me não retornou identificador do pedido.");
         setPix({
           code: result.qrCode || "",
