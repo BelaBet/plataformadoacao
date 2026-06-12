@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ChurchThemeProvider } from "@/lib/theme";
-import { ChurchPageView } from "./index";
+import { ChurchPageView } from "@/components/church-page";
 import type { Tenant } from "@/lib/tenant-context";
 
 export const Route = createFileRoute("/i/$slug")({
