@@ -830,12 +830,26 @@ export function ChurchPageView({ tenantOverride }: { tenantOverride?: Tenant | n
       >
         <div style={{ maxWidth: 1200, margin: "0 auto", padding: "14px 24px", display: "flex", alignItems: "center", gap: 10 }}>
           {CHURCH.logo && !logoError ? (
-            <img
-              src={CHURCH.logo}
-              alt={CHURCH.name}
-              onError={() => setLogoError(true)}
-              style={{ width: 32, height: 32, borderRadius: 999, objectFit: "cover", background: "#fff" }}
-            />
+            <div
+              style={{
+                width: 32,
+                height: 32,
+                borderRadius: 999,
+                background: "#fff",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                overflow: "hidden",
+                padding: 2,
+              }}
+            >
+              <img
+                src={CHURCH.logo}
+                alt={CHURCH.name}
+                onError={() => setLogoError(true)}
+                style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }}
+              />
+            </div>
           ) : (
             <div
               style={{
@@ -915,13 +929,17 @@ export function ChurchPageView({ tenantOverride }: { tenantOverride?: Tenant | n
           {/* Logo da empresa quando houver, sen\u00e3o iniciais */}
           <div className="mb-1 sm:mb-6">
             {CHURCH.logo && !logoError ? (
-              <img
-                src={CHURCH.logo}
-                alt={CHURCH.name}
-                onError={() => setLogoError(true)}
-                className="mx-auto rounded-full w-11 h-11 sm:w-24 sm:h-24 object-cover bg-white"
+              <div
+                className="mx-auto rounded-full w-11 h-11 sm:w-24 sm:h-24 bg-white flex items-center justify-center overflow-hidden p-1 sm:p-2"
                 style={{ border: `2px solid ${accent}` }}
-              />
+              >
+                <img
+                  src={CHURCH.logo}
+                  alt={CHURCH.name}
+                  onError={() => setLogoError(true)}
+                  style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }}
+                />
+              </div>
             ) : (
               <div
                 className="mx-auto grid place-items-center rounded-full w-11 h-11 sm:w-24 sm:h-24 text-sm sm:text-3xl font-extrabold"
@@ -1066,12 +1084,27 @@ export function ChurchPageView({ tenantOverride }: { tenantOverride?: Tenant | n
       <footer style={{ padding: "48px 24px", textAlign: "center", background: "#fafaf7", borderTop: "1px solid #eee" }}>
 
         {CHURCH.logo && !logoError ? (
-          <img
-            src={CHURCH.logo}
-            alt={CHURCH.name}
-            onError={() => setLogoError(true)}
-            style={{ width: 48, height: 48, borderRadius: 999, objectFit: "cover", background: "#fff", margin: "0 auto 12px", display: "block" }}
-          />
+          <div
+            style={{
+              width: 48,
+              height: 48,
+              borderRadius: 999,
+              background: "#fff",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              overflow: "hidden",
+              margin: "0 auto 12px",
+              padding: 4,
+            }}
+          >
+            <img
+              src={CHURCH.logo}
+              alt={CHURCH.name}
+              onError={() => setLogoError(true)}
+              style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }}
+            />
+          </div>
         ) : (
           <div
             style={{
