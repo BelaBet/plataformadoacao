@@ -99,12 +99,16 @@ export function calculateCardAmounts(
 }
 
 // ── BOLETO ───────────────────────────────────────────────────
-export function calculateBoletoAmounts(ofertaEmCentavos: number): SplitAmounts {
+export function calculateBoletoAmounts(
+  ofertaEmCentavos: number,
+  splitOverridePercent?: number | null,
+): SplitAmounts {
   assertPositiveInt(ofertaEmCentavos, "donationAmount");
   const f = FEES.boleto;
   const donationAmount = ofertaEmCentavos;
+  const admPercent = splitOverridePercent ?? f.adm_percent;
 
-  const tickettoFee = Math.round(donationAmount * f.adm_percent);
+  const tickettoFee = Math.round(donationAmount * admPercent);
   const pagarmeFee = f.adquirencia_fixa;
   const tk2OpFee = f.tk2_operacional_fixo;
   const transacaoFee = f.transacao_fixa;
