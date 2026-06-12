@@ -109,37 +109,73 @@ export type Database = {
       }
       donations: {
         Row: {
+          admin_fee: number | null
           amount: number
           campaign_id: string | null
+          card_brand: string | null
+          card_last_four: string | null
           created_at: string
           deleted_at: string | null
           deleted_by: string | null
+          donor_document: string | null
+          donor_email: string | null
+          donor_name: string | null
+          donor_phone: string | null
+          gateway_id: string | null
+          gross_amount: number | null
           id: string
+          installments: number | null
+          net_amount: number | null
           payment_id: string | null
+          payment_method: string | null
           profile_id: string | null
           receipt_url: string | null
           tenant_id: string
         }
         Insert: {
+          admin_fee?: number | null
           amount: number
           campaign_id?: string | null
+          card_brand?: string | null
+          card_last_four?: string | null
           created_at?: string
           deleted_at?: string | null
           deleted_by?: string | null
+          donor_document?: string | null
+          donor_email?: string | null
+          donor_name?: string | null
+          donor_phone?: string | null
+          gateway_id?: string | null
+          gross_amount?: number | null
           id?: string
+          installments?: number | null
+          net_amount?: number | null
           payment_id?: string | null
+          payment_method?: string | null
           profile_id?: string | null
           receipt_url?: string | null
           tenant_id: string
         }
         Update: {
+          admin_fee?: number | null
           amount?: number
           campaign_id?: string | null
+          card_brand?: string | null
+          card_last_four?: string | null
           created_at?: string
           deleted_at?: string | null
           deleted_by?: string | null
+          donor_document?: string | null
+          donor_email?: string | null
+          donor_name?: string | null
+          donor_phone?: string | null
+          gateway_id?: string | null
+          gross_amount?: number | null
           id?: string
+          installments?: number | null
+          net_amount?: number | null
           payment_id?: string | null
+          payment_method?: string | null
           profile_id?: string | null
           receipt_url?: string | null
           tenant_id?: string
@@ -238,6 +274,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      fee_rules: {
+        Row: {
+          acquirer_fee_percent: number | null
+          adm_fee_percent: number | null
+          anticipation_percent: number | null
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          payment_method: string
+          tenant_id: string
+          tk2_op_fixed: number | null
+          tk2_op_percent: number | null
+          transaction_fixed: number | null
+          who_pays: string
+        }
+        Insert: {
+          acquirer_fee_percent?: number | null
+          adm_fee_percent?: number | null
+          anticipation_percent?: number | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          payment_method: string
+          tenant_id: string
+          tk2_op_fixed?: number | null
+          tk2_op_percent?: number | null
+          transaction_fixed?: number | null
+          who_pays: string
+        }
+        Update: {
+          acquirer_fee_percent?: number | null
+          adm_fee_percent?: number | null
+          anticipation_percent?: number | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          payment_method?: string
+          tenant_id?: string
+          tk2_op_fixed?: number | null
+          tk2_op_percent?: number | null
+          transaction_fixed?: number | null
+          who_pays?: string
+        }
+        Relationships: []
       }
       group_members: {
         Row: {
