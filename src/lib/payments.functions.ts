@@ -5,6 +5,7 @@ import {
   calculatePixAmounts,
   calculateCardAmounts,
   fetchSellerRecipientId,
+  fetchCostCenter,
   type CardBrand,
   type SplitAmounts,
 } from "./split.utils";
@@ -34,6 +35,7 @@ const DonationAmount = z.number().int().positive().max(100_000_000);
 const PixInput = z.object({
   tenantId: z.string().uuid(),
   donationAmount: DonationAmount,
+  costCenterId: z.string().uuid().optional().nullable(),
   ...OptionalCustomerSchema,
 });
 
@@ -42,6 +44,7 @@ const CardInput = z.object({
   donationAmount: DonationAmount,
   installments: z.number().int().min(1).max(12).default(1),
   brand: z.enum(["master_visa", "ello_hiper_amex"]).default("master_visa"),
+  costCenterId: z.string().uuid().optional().nullable(),
   card: z.object({
     number: z.string().min(13).max(19),
     holderName: z.string().min(2).max(120),
