@@ -351,7 +351,7 @@ function WizardPage() {
           {step === 3 && <Step4 s={s} set={set} />}
           {step === 4 && <Step5 s={s} set={set} />}
           {step === 5 && <Step6 />}
-          {step === 6 && <Step7 s={s} />}
+          {step === 6 && <Step7 s={s} set={set} />}
         </CardContent>
       </Card>
 
