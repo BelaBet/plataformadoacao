@@ -110,6 +110,14 @@ export const createBoletoPayment = createServerFn({ method: "POST" })
           split: buildSplitPayload(amounts, sellerRecipientId),
         },
       ],
+      metadata: {
+        tenant_id: data.tenantId,
+        cost_center_id: null,
+        gross_amount: amounts.totalAmount,
+        admin_fee: amounts.tickettoFee,
+        net_amount: amounts.donationAmount,
+        installments: 1,
+      },
     };
 
     const auth = "Basic " + Buffer.from(`${secretKey}:`).toString("base64");
