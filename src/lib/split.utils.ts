@@ -147,6 +147,7 @@ export function buildSplitPayload(
       options: {
         liable: true,
         charge_processing_fee: true,
+        charge_remainder_fee: true,
       },
     },
     {
@@ -156,6 +157,7 @@ export function buildSplitPayload(
       options: {
         liable: false,
         charge_processing_fee: false,
+        charge_remainder_fee: false,
       },
     },
   ];
