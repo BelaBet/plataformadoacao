@@ -449,7 +449,9 @@ const QUICK_ACTIONS: { key: ActionKey; label: string; icon: ComponentType<{ clas
   { key: "fatura", label: "Cartão de crédito", icon: CreditCard,     tint: "bg-violet-100 text-violet-700" },
 ];
 
-function PaymentsQuickActions({ primary, accent, pixKey }: { primary: string; accent: string; pixKey: string }) {
+type CostCenterOpt = { id: string; name: string; slug: string; allows_installments: boolean; max_installments: number } | null;
+
+function PaymentsQuickActions({ primary, accent, pixKey, costCenter }: { primary: string; accent: string; pixKey: string; costCenter?: CostCenterOpt }) {
   // contribKey = método cujo modal de valor está aberto
   // methodOpen = método cujo dialog específico (Pix/Boleto/...) está aberto, após confirmar o valor
   const [contribKey, setContribKey] = useState<ActionKey | null>(null);
@@ -491,6 +493,7 @@ function PaymentsQuickActions({ primary, accent, pixKey }: { primary: string; ac
         isOpen={contribKey !== null}
         onClose={() => setContribKey(null)}
         method={contribKey ? { key: contribKey, label: contribLabel } : undefined}
+        costCenter={costCenter ?? null}
         onConfirm={(valor) => {
           const k = contribKey;
           if (k === "boleto") {
