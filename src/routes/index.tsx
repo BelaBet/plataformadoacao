@@ -1000,7 +1000,12 @@ export function ChurchPageView({ tenantOverride }: { tenantOverride?: Tenant | n
         </div>
 
         <div className="fade-up-2">
-          <PaymentsQuickActions primary={primary} accent={accent} pixKey={PIX_KEY} />
+          <PaymentsQuickActions primary={primary} accent={accent} pixKey={PIX_KEY} costCenter={selectedCostCenter ?? null} />
+          {selectedCostCenter && (
+            <p className="mt-2 text-center text-xs text-muted-foreground">
+              Doação direcionada para <strong>{selectedCostCenter.name}</strong>.
+            </p>
+          )}
         </div>
 
         <div
