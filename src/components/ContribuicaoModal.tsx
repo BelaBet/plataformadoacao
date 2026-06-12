@@ -320,8 +320,12 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method, costCent
       setError("CNPJ inválido. Verifique os números e tente novamente");
       return null;
     }
-    if (phoneDigits && (phoneDigits.length < 10 || phoneDigits.length > 11)) {
-      setError("Informe um celular válido com DDD ou deixe em branco.");
+    if (!phoneDigits) {
+      setError("Informe seu celular");
+      return null;
+    }
+    if (phoneDigits.length < 10 || phoneDigits.length > 11) {
+      setError("Informe um celular válido com DDD.");
       return null;
     }
     return { name, email, cpf: cpfDigits, phone: phoneDigits };
