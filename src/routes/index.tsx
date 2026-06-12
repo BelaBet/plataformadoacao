@@ -433,7 +433,7 @@ function EventCard({ event, accent, primary }: { event: EventItem; accent: strin
 
         {/* CTA */}
         <div style={{ marginTop: "auto", paddingTop: 12, borderTop: "1px solid #f0f0f0", color: accent, fontWeight: 600, fontSize: 14 }}>
-          {event.free ? "Confirmar Presença →" : "Comprar Ingresso →"}
+          Participar do Evento →
         </div>
       </div>
     </a>

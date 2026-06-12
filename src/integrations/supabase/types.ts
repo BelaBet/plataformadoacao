@@ -306,10 +306,12 @@ export type Database = {
       }
       events: {
         Row: {
+          banner_url: string | null
           capacity: number | null
           created_at: string
           date: string | null
           description: string | null
+          external_url: string
           id: string
           location: string | null
           status: Database["public"]["Enums"]["event_status"]
@@ -319,10 +321,12 @@ export type Database = {
           type: Database["public"]["Enums"]["event_type"]
         }
         Insert: {
+          banner_url?: string | null
           capacity?: number | null
           created_at?: string
           date?: string | null
           description?: string | null
+          external_url: string
           id?: string
           location?: string | null
           status?: Database["public"]["Enums"]["event_status"]
@@ -332,10 +336,12 @@ export type Database = {
           type?: Database["public"]["Enums"]["event_type"]
         }
         Update: {
+          banner_url?: string | null
           capacity?: number | null
           created_at?: string
           date?: string | null
           description?: string | null
+          external_url?: string
           id?: string
           location?: string | null
           status?: Database["public"]["Enums"]["event_status"]

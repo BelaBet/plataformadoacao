@@ -32,6 +32,7 @@ import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authentic
 import { Route as ApiPublicCreateDonationRouteImport } from './routes/api/public/create-donation'
 import { Route as AuthenticatedManageSettingsRouteImport } from './routes/_authenticated/manage.settings'
 import { Route as AuthenticatedManageMembersRouteImport } from './routes/_authenticated/manage.members'
+import { Route as AuthenticatedManageEventsRouteImport } from './routes/_authenticated/manage.events'
 import { Route as AuthenticatedManageDashboardRouteImport } from './routes/_authenticated/manage.dashboard'
 import { Route as AuthenticatedIgrejasOnboardingRouteImport } from './routes/_authenticated/igrejas.onboarding'
 import { Route as AuthenticatedIgrejasNovaRouteImport } from './routes/_authenticated/igrejas.nova'
@@ -165,6 +166,12 @@ const AuthenticatedManageMembersRoute =
     path: '/members',
     getParentRoute: () => AuthenticatedManageRoute,
   } as any)
+const AuthenticatedManageEventsRoute =
+  AuthenticatedManageEventsRouteImport.update({
+    id: '/events',
+    path: '/events',
+    getParentRoute: () => AuthenticatedManageRoute,
+  } as any)
 const AuthenticatedManageDashboardRoute =
   AuthenticatedManageDashboardRouteImport.update({
     id: '/dashboard',
@@ -264,6 +271,7 @@ export interface FileRoutesByFullPath {
   '/igrejas/nova': typeof AuthenticatedIgrejasNovaRoute
   '/igrejas/onboarding': typeof AuthenticatedIgrejasOnboardingRoute
   '/manage/dashboard': typeof AuthenticatedManageDashboardRoute
+  '/manage/events': typeof AuthenticatedManageEventsRoute
   '/manage/members': typeof AuthenticatedManageMembersRoute
   '/manage/settings': typeof AuthenticatedManageSettingsRoute
   '/api/public/create-donation': typeof ApiPublicCreateDonationRoute
@@ -298,6 +306,7 @@ export interface FileRoutesByTo {
   '/igrejas/nova': typeof AuthenticatedIgrejasNovaRoute
   '/igrejas/onboarding': typeof AuthenticatedIgrejasOnboardingRoute
   '/manage/dashboard': typeof AuthenticatedManageDashboardRoute
+  '/manage/events': typeof AuthenticatedManageEventsRoute
   '/manage/members': typeof AuthenticatedManageMembersRoute
   '/manage/settings': typeof AuthenticatedManageSettingsRoute
   '/api/public/create-donation': typeof ApiPublicCreateDonationRoute
@@ -336,6 +345,7 @@ export interface FileRoutesById {
   '/_authenticated/igrejas/nova': typeof AuthenticatedIgrejasNovaRoute
   '/_authenticated/igrejas/onboarding': typeof AuthenticatedIgrejasOnboardingRoute
   '/_authenticated/manage/dashboard': typeof AuthenticatedManageDashboardRoute
+  '/_authenticated/manage/events': typeof AuthenticatedManageEventsRoute
   '/_authenticated/manage/members': typeof AuthenticatedManageMembersRoute
   '/_authenticated/manage/settings': typeof AuthenticatedManageSettingsRoute
   '/api/public/create-donation': typeof ApiPublicCreateDonationRoute
@@ -374,6 +384,7 @@ export interface FileRouteTypes {
     | '/igrejas/nova'
     | '/igrejas/onboarding'
     | '/manage/dashboard'
+    | '/manage/events'
     | '/manage/members'
     | '/manage/settings'
     | '/api/public/create-donation'
@@ -408,6 +419,7 @@ export interface FileRouteTypes {
     | '/igrejas/nova'
     | '/igrejas/onboarding'
     | '/manage/dashboard'
+    | '/manage/events'
     | '/manage/members'
     | '/manage/settings'
     | '/api/public/create-donation'
@@ -445,6 +457,7 @@ export interface FileRouteTypes {
     | '/_authenticated/igrejas/nova'
     | '/_authenticated/igrejas/onboarding'
     | '/_authenticated/manage/dashboard'
+    | '/_authenticated/manage/events'
     | '/_authenticated/manage/members'
     | '/_authenticated/manage/settings'
     | '/api/public/create-donation'
@@ -631,6 +644,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedManageMembersRouteImport
       parentRoute: typeof AuthenticatedManageRoute
     }
+    '/_authenticated/manage/events': {
+      id: '/_authenticated/manage/events'
+      path: '/events'
+      fullPath: '/manage/events'
+      preLoaderRoute: typeof AuthenticatedManageEventsRouteImport
+      parentRoute: typeof AuthenticatedManageRoute
+    }
     '/_authenticated/manage/dashboard': {
       id: '/_authenticated/manage/dashboard'
       path: '/dashboard'
@@ -745,6 +765,7 @@ const AuthenticatedAdminRouteWithChildren =
 
 interface AuthenticatedManageRouteChildren {
   AuthenticatedManageDashboardRoute: typeof AuthenticatedManageDashboardRoute
+  AuthenticatedManageEventsRoute: typeof AuthenticatedManageEventsRoute
   AuthenticatedManageMembersRoute: typeof AuthenticatedManageMembersRoute
   AuthenticatedManageSettingsRoute: typeof AuthenticatedManageSettingsRoute
   AuthenticatedManageIndexRoute: typeof AuthenticatedManageIndexRoute
@@ -752,6 +773,7 @@ interface AuthenticatedManageRouteChildren {
 
 const AuthenticatedManageRouteChildren: AuthenticatedManageRouteChildren = {
   AuthenticatedManageDashboardRoute: AuthenticatedManageDashboardRoute,
+  AuthenticatedManageEventsRoute: AuthenticatedManageEventsRoute,
   AuthenticatedManageMembersRoute: AuthenticatedManageMembersRoute,
   AuthenticatedManageSettingsRoute: AuthenticatedManageSettingsRoute,
   AuthenticatedManageIndexRoute: AuthenticatedManageIndexRoute,
