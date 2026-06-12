@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 import { DonationsSummary } from "@/components/donations-summary";
+import { ExternalLink } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/dashboard/")({
   component: Dashboard,
