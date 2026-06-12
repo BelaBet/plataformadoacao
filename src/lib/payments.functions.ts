@@ -145,10 +145,19 @@ async function persistPayment(args: {
   gatewayRequest?: any;
   gatewayResponse?: any;
   errorMessage?: string | null;
+  donor?: {
+    name?: string | null;
+    email?: string | null;
+    document?: string | null;
+    phone?: string | null;
+  };
 }) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const platformRecipientId = process.env.PLATFORM_RECIPIENT_ID;
   const a = args.amounts;
+  const donor = args.donor ?? {};
+  const cleanDoc = donor.document ? donor.document.replace(/\D/g, "") : null;
+  const cleanPhone = donor.phone ? donor.phone.replace(/\D/g, "") : null;
 
   const { data: payment, error: payErr } = await supabaseAdmin
     .from("payments")
@@ -185,7 +194,11 @@ async function persistPayment(args: {
         tenant_id: args.tenantId,
         amount: a.donationAmount / 100,
         payment_id: payment.id,
-      })
+        donor_name: donor.name ?? null,
+        donor_email: donor.email ?? null,
+        donor_document: cleanDoc,
+        donor_phone: cleanPhone,
+      } as any)
       .select("id")
       .single();
     if (donErr || !donation) throw new Error(donErr?.message ?? "Falha ao registrar doação");
@@ -306,6 +319,12 @@ export const createPixPayment = createServerFn({ method: "POST" })
       gatewayRequest: call.request,
       gatewayResponse: call.response,
       errorMessage: null,
+      donor: {
+        name: resolved.name ?? null,
+        email: resolved.email ?? null,
+        document: resolved.document ?? null,
+        phone: resolved.phone ?? null,
+      },
     });
 
     return {
@@ -491,6 +510,12 @@ export const createCreditCardPayment = createServerFn({ method: "POST" })
       gatewayRequest: call.request,
       gatewayResponse: call.response,
       errorMessage: mapped === "failed" ? (charge?.last_transaction?.acquirer_message ?? null) : null,
+      donor: {
+        name: resolved.name ?? null,
+        email: resolved.email ?? null,
+        document: resolved.document ?? null,
+        phone: resolved.phone ?? null,
+      },
     });
 
     return {

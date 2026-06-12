@@ -320,8 +320,12 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method, costCent
       setError("CNPJ inválido. Verifique os números e tente novamente");
       return null;
     }
-    if (phoneDigits && (phoneDigits.length < 10 || phoneDigits.length > 11)) {
-      setError("Informe um celular válido com DDD ou deixe em branco.");
+    if (!phoneDigits) {
+      setError("Informe seu celular");
+      return null;
+    }
+    if (phoneDigits.length < 10 || phoneDigits.length > 11) {
+      setError("Informe um celular válido com DDD.");
       return null;
     }
     return { name, email, cpf: cpfDigits, phone: phoneDigits };
@@ -966,7 +970,7 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method, costCent
                   </p>
                 </div>
                 <div>
-                  <label className="text-xs font-medium text-[#6B7280]">Telefone (opcional)</label>
+                  <label className="text-xs font-medium text-[#6B7280]">Celular *</label>
                   <input
                     type="tel"
                     inputMode="numeric"
@@ -986,6 +990,7 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method, costCent
                     placeholder="(00) 00000-0000"
                     className="mt-1 h-11 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm text-[#111827] outline-none focus:border-[#7C3AED]"
                   />
+                  <p className="mt-1 text-[11px] text-[#6B7280]">Obrigatório para confirmação do pagamento</p>
                 </div>
               </div>
             )}
