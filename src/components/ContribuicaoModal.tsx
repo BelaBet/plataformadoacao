@@ -407,11 +407,14 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method, costCent
         if (addrCity.trim().length < 2) return setError("Informe a cidade.");
         if (addrState.trim().length !== 2) return setError("UF inválida (2 letras).");
 
+        const allowsInst = costCenter ? costCenter.allows_installments : true;
+        const maxInst = costCenter ? Math.max(1, Math.min(12, costCenter.max_installments)) : 12;
+        const effInstallments = allowsInst ? Math.min(installments, maxInst) : 1;
         const result = await createCard({
           data: {
             tenantId: tenant.id,
             donationAmount: Math.round(num * 100),
-            installments,
+            installments: effInstallments,
             ...(costCenter?.id ? { costCenterId: costCenter.id } : {}),
             customerName: payer.name,
             customerEmail: payer.email,
