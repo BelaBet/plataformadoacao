@@ -1,0 +1,227 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/lib/auth-context";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter,
+} from "@/components/ui/dialog";
+import { Calendar, ExternalLink, Plus } from "lucide-react";
+import { toast } from "sonner";
+import { translateError } from "@/lib/translate-error";
+import { externalEventUrlSchema, TICKETTO_BASE, isTickettoUrl } from "@/lib/validators/url";
+import { z } from "zod";
+
+export const Route = createFileRoute("/_authenticated/manage/events")({
+  component: ManageEventsPage,
+  head: () => ({ meta: [{ title: "Eventos — Gestão" }] }),
+});
+
+const formSchema = z.object({
+  title: z.string().trim().min(2, "Título obrigatório").max(140),
+  date: z.string().optional(),
+  location: z.string().trim().max(200).optional(),
+  description: z.string().trim().max(2000).optional(),
+  banner_url: z.string().trim().url("Banner inválido").optional().or(z.literal("")),
+  external_url: externalEventUrlSchema,
+});
+type FormData = z.infer<typeof formSchema>;
+
+const empty: FormData = {
+  title: "",
+  date: "",
+  location: "",
+  description: "",
+  banner_url: "",
+  external_url: TICKETTO_BASE,
+};
+
+function ManageEventsPage() {
+  const { profile } = useAuth();
+  const tenantId = profile?.tenant_id;
+  const qc = useQueryClient();
+  const [open, setOpen] = useState(false);
+  const [form, setForm] = useState<FormData>(empty);
+
+  const { data: events, isLoading } = useQuery({
+    queryKey: ["manage-events", tenantId],
+    enabled: !!tenantId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("events")
+        .select("id,title,date,location,description,banner_url,external_url,status,created_at")
+        .eq("tenant_id", tenantId!)
+        .order("date", { ascending: false, nullsFirst: false });
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const createMut = useMutation({
+    mutationFn: async (data: FormData) => {
+      if (!tenantId) throw new Error("Tenant não definido");
+      const parsed = formSchema.parse(data);
+      const { error } = await supabase.from("events").insert({
+        tenant_id: tenantId,
+        title: parsed.title,
+        date: parsed.date ? new Date(parsed.date).toISOString() : null,
+        location: parsed.location || null,
+        description: parsed.description || null,
+        banner_url: parsed.banner_url || null,
+        external_url: parsed.external_url,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Evento cadastrado");
+      setOpen(false);
+      setForm(empty);
+      qc.invalidateQueries({ queryKey: ["manage-events", tenantId] });
+    },
+    onError: (e) => toast.error(translateError(e)),
+  });
+
+  function onSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    const r = formSchema.safeParse(form);
+    if (!r.success) {
+      toast.error(r.error.issues[0]?.message ?? "Verifique os campos");
+      return;
+    }
+    createMut.mutate(r.data);
+  }
+
+  return (
+    <div>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="font-display text-3xl md:text-4xl">Eventos</h1>
+          <p className="mt-1 text-muted-foreground">
+            Cadastre eventos da igreja. A inscrição é feita no link externo
+            (TicketTO, Sympla, Eventbrite, Hotmart ou site próprio).
+          </p>
+        </div>
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogTrigger asChild>
+            <Button><Plus className="mr-2 h-4 w-4" /> Novo evento</Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-lg">
+            <DialogHeader><DialogTitle>Novo evento</DialogTitle></DialogHeader>
+            <form onSubmit={onSubmit} className="space-y-4">
+              <div>
+                <Label htmlFor="title">Título *</Label>
+                <Input id="title" value={form.title}
+                  onChange={(e) => setForm({ ...form, title: e.target.value })}
+                  required maxLength={140} />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label htmlFor="date">Data e hora</Label>
+                  <Input id="date" type="datetime-local" value={form.date}
+                    onChange={(e) => setForm({ ...form, date: e.target.value })} />
+                </div>
+                <div>
+                  <Label htmlFor="location">Local</Label>
+                  <Input id="location" value={form.location}
+                    onChange={(e) => setForm({ ...form, location: e.target.value })} />
+                </div>
+              </div>
+              <div>
+                <Label htmlFor="description">Descrição</Label>
+                <Textarea id="description" rows={3} value={form.description}
+                  onChange={(e) => setForm({ ...form, description: e.target.value })} />
+              </div>
+              <div>
+                <Label htmlFor="banner_url">Banner (URL da imagem)</Label>
+                <Input id="banner_url" type="url" placeholder="https://…/banner.jpg"
+                  value={form.banner_url}
+                  onChange={(e) => setForm({ ...form, banner_url: e.target.value })} />
+              </div>
+              <div>
+                <Label htmlFor="external_url">URL do evento *</Label>
+                <Input id="external_url" type="url" required
+                  placeholder="https://www.ticketto.com.br/evento/…"
+                  value={form.external_url}
+                  onChange={(e) => setForm({ ...form, external_url: e.target.value })} />
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Padrão: TicketTO. Também aceitamos Sympla, Eventbrite, Hotmart
+                  ou site próprio da igreja.
+                </p>
+              </div>
+              <DialogFooter>
+                <Button type="button" variant="ghost" onClick={() => setOpen(false)}>
+                  Cancelar
+                </Button>
+                <Button type="submit" disabled={createMut.isPending}>
+                  {createMut.isPending ? "Salvando…" : "Cadastrar"}
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      <div className="mt-8 grid gap-4 md:grid-cols-2">
+        {isLoading ? (
+          <p className="text-sm text-muted-foreground">Carregando…</p>
+        ) : (events?.length ?? 0) === 0 ? (
+          <Card className="col-span-full p-10 text-center">
+            <Calendar className="mx-auto h-8 w-8 text-muted-foreground" />
+            <p className="mt-3 text-sm text-muted-foreground">
+              Nenhum evento cadastrado.
+            </p>
+          </Card>
+        ) : (
+          events!.map((ev) => (
+            <Card key={ev.id} className="overflow-hidden">
+              {ev.banner_url && (
+                <img src={ev.banner_url} alt={ev.title}
+                  className="h-40 w-full object-cover" />
+              )}
+              <div className="p-5">
+                <div className="flex items-center justify-between gap-2">
+                  <h3 className="font-display text-lg">{ev.title}</h3>
+                  <Badge variant={ev.status === "active" ? "default" : "secondary"}>
+                    {ev.status}
+                  </Badge>
+                </div>
+                {ev.date && (
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {new Date(ev.date).toLocaleString("pt-BR")}
+                  </p>
+                )}
+                {ev.location && (
+                  <p className="text-xs text-muted-foreground">{ev.location}</p>
+                )}
+                {ev.description && (
+                  <p className="mt-2 line-clamp-3 text-sm text-muted-foreground">
+                    {ev.description}
+                  </p>
+                )}
+                <a
+                  href={ev.external_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
+                >
+                  Participar do Evento <ExternalLink className="h-3.5 w-3.5" />
+                </a>
+                {!isTickettoUrl(ev.external_url) && (
+                  <p className="mt-1 text-[10px] text-muted-foreground">
+                    Link externo (não-TicketTO)
+                  </p>
+                )}
+              </div>
+            </Card>
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
