@@ -510,6 +510,12 @@ export const createCreditCardPayment = createServerFn({ method: "POST" })
       gatewayRequest: call.request,
       gatewayResponse: call.response,
       errorMessage: mapped === "failed" ? (charge?.last_transaction?.acquirer_message ?? null) : null,
+      donor: {
+        name: resolved.name ?? null,
+        email: resolved.email ?? null,
+        document: resolved.document ?? null,
+        phone: resolved.phone ?? null,
+      },
     });
 
     return {
