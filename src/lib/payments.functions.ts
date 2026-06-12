@@ -140,6 +140,7 @@ async function persistPayment(args: {
   method: "pix" | "credit_card" | "boleto";
   status: "pending" | "confirmed" | "failed";
   gatewayId: string;
+  installments?: number;
   cardBrand?: CardBrand | null;
   costCenterId?: string | null;
   gatewayRequest?: any;
@@ -192,12 +193,20 @@ async function persistPayment(args: {
       .from("donations")
       .insert({
         tenant_id: args.tenantId,
+        cost_center_id: args.costCenterId ?? null,
         amount: a.donationAmount / 100,
         payment_id: payment.id,
-        donor_name: donor.name ?? null,
-        donor_email: donor.email ?? null,
+        donor_name: donor.name?.trim() ?? null,
+        donor_email: donor.email?.trim() ?? null,
         donor_document: cleanDoc,
         donor_phone: cleanPhone,
+        gross_amount: a.totalAmount,
+        admin_fee: a.tickettoFee,
+        net_amount: a.donationAmount,
+        payment_method: args.method,
+        installments: args.installments ?? 1,
+        gateway_id: args.gatewayId,
+        card_brand: args.cardBrand ?? null,
       } as any)
       .select("id")
       .single();
