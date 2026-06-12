@@ -205,9 +205,13 @@ export const createPixPayment = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => PixInput.parse(data))
   .handler(async ({ data }) => {
     const sellerRecipientId = await fetchSellerRecipientId(data.tenantId);
-    const amounts = calculatePixAmounts(data.donationAmount);
+    const costCenter = data.costCenterId
+      ? await fetchCostCenter(data.costCenterId, data.tenantId)
+      : null;
+    const splitOverride = costCenter?.split_platform_percent ?? null;
+    const amounts = calculatePixAmounts(data.donationAmount, splitOverride);
     if (process.env.NODE_ENV !== "production") {
-      console.log("[pix] amounts", amounts, { sellerRecipientId });
+      console.log("[pix] amounts", amounts, { sellerRecipientId, costCenterId: data.costCenterId, splitOverride });
     }
     const expiresIn = 60 * 60;
 
