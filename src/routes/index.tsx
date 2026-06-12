@@ -929,13 +929,17 @@ export function ChurchPageView({ tenantOverride }: { tenantOverride?: Tenant | n
           {/* Logo da empresa quando houver, sen\u00e3o iniciais */}
           <div className="mb-1 sm:mb-6">
             {CHURCH.logo && !logoError ? (
-              <img
-                src={CHURCH.logo}
-                alt={CHURCH.name}
-                onError={() => setLogoError(true)}
-                className="mx-auto rounded-full w-11 h-11 sm:w-24 sm:h-24 object-cover bg-white"
+              <div
+                className="mx-auto rounded-full w-11 h-11 sm:w-24 sm:h-24 bg-white flex items-center justify-center overflow-hidden p-1 sm:p-2"
                 style={{ border: `2px solid ${accent}` }}
-              />
+              >
+                <img
+                  src={CHURCH.logo}
+                  alt={CHURCH.name}
+                  onError={() => setLogoError(true)}
+                  style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }}
+                />
+              </div>
             ) : (
               <div
                 className="mx-auto grid place-items-center rounded-full w-11 h-11 sm:w-24 sm:h-24 text-sm sm:text-3xl font-extrabold"
