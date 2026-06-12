@@ -319,6 +319,12 @@ export const createPixPayment = createServerFn({ method: "POST" })
       gatewayRequest: call.request,
       gatewayResponse: call.response,
       errorMessage: null,
+      donor: {
+        name: resolved.name ?? null,
+        email: resolved.email ?? null,
+        document: resolved.document ?? null,
+        phone: resolved.phone ?? null,
+      },
     });
 
     return {
