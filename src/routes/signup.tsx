@@ -189,13 +189,16 @@ function SignupPage() {
     return (
       <div className="flex min-h-screen items-center justify-center px-4">
         <div className="w-full max-w-md text-center">
-          <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary text-2xl">✉</div>
-          <h1 className="font-display text-2xl">Verifique seu e-mail</h1>
+          <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-green-100 text-green-600 text-2xl">✓</div>
+          <h1 className="font-display text-2xl">Instituição cadastrada!</h1>
           <p className="mt-3 text-muted-foreground">
-            Enviamos um link de confirmação para <strong>{email}</strong>.
-            Após confirmar, faça login para acessar o painel de <strong>{churchName}</strong>.
+            <strong>{churchName}</strong> foi cadastrada com sucesso.
+            Verifique o e-mail <strong>{email}</strong> para confirmar
+            sua conta e em seguida faça login.
           </p>
-          <Button asChild className="mt-6" variant="outline"><Link to="/login">Voltar ao login</Link></Button>
+          <Button asChild className="mt-6">
+            <Link to="/login">Ir para o login →</Link>
+          </Button>
         </div>
       </div>
     );
