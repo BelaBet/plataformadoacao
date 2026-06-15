@@ -1744,32 +1744,34 @@ export function ChurchPageView({ tenantOverride }: { tenantOverride?: Tenant | n
       </section>
 
       {/* ── EVENTS SECTION ─────────────────────────────────────────────── */}
-      <section style={{ padding: "80px 24px", background: "#fff" }}>
-        <div className="fade-up-3" style={{ maxWidth: 1200, margin: "0 auto" }}>
-          {/* Section Header */}
-          <div style={{ textAlign: "center", marginBottom: 48 }}>
-            <span style={{ fontSize: 12, letterSpacing: 3, color: accent, fontWeight: 600 }}>✦ AGENDA</span>
-            <h2
-              style={{
-                fontFamily: "'Playfair Display', serif",
-                fontSize: "clamp(1.8rem, 4vw, 2.5rem)",
-                margin: "12px 0 8px",
-                color: primary,
-              }}
-            >
-              Próximos Eventos
-            </h2>
-            <p style={{ color: "#666", margin: 0 }}>Clique em qualquer evento para garantir sua participação.</p>
-          </div>
+      {eventsToRender.length > 0 && (
+        <section style={{ padding: "80px 24px", background: "#fff" }}>
+          <div className="fade-up-3" style={{ maxWidth: 1200, margin: "0 auto" }}>
+            {/* Section Header */}
+            <div style={{ textAlign: "center", marginBottom: 48 }}>
+              <span style={{ fontSize: 12, letterSpacing: 3, color: accent, fontWeight: 600 }}>✦ AGENDA</span>
+              <h2
+                style={{
+                  fontFamily: "'Playfair Display', serif",
+                  fontSize: "clamp(1.8rem, 4vw, 2.5rem)",
+                  margin: "12px 0 8px",
+                  color: primary,
+                }}
+              >
+                Próximos Eventos
+              </h2>
+              <p style={{ color: "#666", margin: 0 }}>Clique em qualquer evento para garantir sua participação.</p>
+            </div>
 
-          {/* Events Grid */}
-          <div style={{ display: "grid", gap: 24, gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))" }}>
-            {EVENTS.map((event) => (
-              <EventCard key={event.id} event={event} accent={accent} primary={primary} />
-            ))}
+            {/* Events Grid */}
+            <div style={{ display: "grid", gap: 24, gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))" }}>
+              {eventsToRender.map((event) => (
+                <EventCard key={event.id} event={event} accent={accent} primary={primary} />
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* ── FOOTER ─────────────────────────────────────────────────────── */}
       <footer style={{ padding: "48px 24px", textAlign: "center", background: "#fafaf7", borderTop: "1px solid #eee" }}>
