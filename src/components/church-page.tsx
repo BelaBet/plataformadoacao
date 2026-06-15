@@ -1238,6 +1238,7 @@ export function ChurchPageView({ tenantOverride }: { tenantOverride?: Tenant | n
   const { tenant: ctxTenant } = useTenant();
   const { profile } = useAuth();
   const { theme } = useChurchTheme();
+  const qrRef = useRef<HTMLDivElement>(null);
 
   // Quando o usuário está autenticado, prioriza o tenant do próprio perfil
   // (lendo sempre da tabela `tenants`, sem cache stale) para refletir mudanças
