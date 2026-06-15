@@ -7,13 +7,13 @@ export type PaymentMethod = "pix" | "credit_card" | "boleto";
 export type CardBrand = "master_visa" | "ello_hiper_amex";
 
 export interface SplitAmounts {
-  donationAmount: number;       // valor que vai para a igreja (centavos)
-  tickettoFee: number;          // taxa ADM 3,5% TK2
-  pagarmeFee: number;           // taxa fixa Pagar.me absorvida
-  tk2OpFee: number;             // taxa operacional TK2
-  transacaoFee: number;         // taxa fixa por transação
-  splitPlatformAmount: number;  // total para plataforma TK2
-  totalAmount: number;          // total cobrado do doador
+  donationAmount: number; // valor que vai para a igreja (centavos)
+  tickettoFee: number; // taxa ADM 3,5% TK2
+  pagarmeFee: number; // taxa fixa Pagar.me absorvida
+  tk2OpFee: number; // taxa operacional TK2
+  transacaoFee: number; // taxa fixa por transação
+  splitPlatformAmount: number; // total para plataforma TK2
+  totalAmount: number; // total cobrado do doador
 }
 
 export interface SplitPayload {
@@ -34,10 +34,7 @@ function assertPositiveInt(v: number, name: string) {
 }
 
 // ── PIX ──────────────────────────────────────────────────────
-export function calculatePixAmounts(
-  ofertaEmCentavos: number,
-  splitOverridePercent?: number | null,
-): SplitAmounts {
+export function calculatePixAmounts(ofertaEmCentavos: number, splitOverridePercent?: number | null): SplitAmounts {
   assertPositiveInt(ofertaEmCentavos, "donationAmount");
   const f = FEES.pix;
   const donationAmount = ofertaEmCentavos;
@@ -77,8 +74,7 @@ export function calculateCardAmounts(
   const tickettoFee = Math.round(donationAmount * admPercent);
   const tk2OpFee = Math.round(donationAmount * f.tk2_op_percent * admPercent);
 
-  const adquirenciaPercent =
-    installments <= 1 ? f.adquirencia_avista_percent : f.adquirencia_2x_percent;
+  const adquirenciaPercent = installments <= 1 ? f.adquirencia_avista_percent : f.adquirencia_2x_percent;
   const adquirenciaValor = Math.round(donationAmount * adquirenciaPercent);
 
   const pagarmeFee = 0;
@@ -99,10 +95,7 @@ export function calculateCardAmounts(
 }
 
 // ── BOLETO ───────────────────────────────────────────────────
-export function calculateBoletoAmounts(
-  ofertaEmCentavos: number,
-  splitOverridePercent?: number | null,
-): SplitAmounts {
+export function calculateBoletoAmounts(ofertaEmCentavos: number, splitOverridePercent?: number | null): SplitAmounts {
   assertPositiveInt(ofertaEmCentavos, "donationAmount");
   const f = FEES.boleto;
   const donationAmount = ofertaEmCentavos;
@@ -113,8 +106,8 @@ export function calculateBoletoAmounts(
   const tk2OpFee = f.tk2_operacional_fixo;
   const transacaoFee = f.transacao_fixa;
 
-  const splitPlatformAmount = tickettoFee + tk2OpFee;
-  const totalAmount = donationAmount + splitPlatformAmount + pagarmeFee;
+  const splitPlatformAmount = tickettoFee + tk2OpFee + pagarmeFee;
+  const totalAmount = donationAmount + splitPlatformAmount;
 
   return {
     donationAmount,
@@ -128,10 +121,7 @@ export function calculateBoletoAmounts(
 }
 
 // ── BUILD SPLIT PAYLOAD ───────────────────────────────────────
-export function buildSplitPayload(
-  amounts: SplitAmounts,
-  sellerRecipientId: string,
-): SplitPayload[] {
+export function buildSplitPayload(amounts: SplitAmounts, sellerRecipientId: string): SplitPayload[] {
   if (!sellerRecipientId) {
     throw new Error("seller_recipient_id ausente — instituição não habilitada para pagamentos");
   }
@@ -168,10 +158,7 @@ export function buildSplitPayload(
  * Compat: usado pela UI para estimar o total cobrado.
  * Para cartão usa parcelamento à vista com bandeira master/visa como padrão.
  */
-export function calculateAmounts(
-  donationAmount: number,
-  method: PaymentMethod = "pix",
-): SplitAmounts {
+export function calculateAmounts(donationAmount: number, method: PaymentMethod = "pix"): SplitAmounts {
   if (method === "pix") return calculatePixAmounts(donationAmount);
   if (method === "boleto") return calculateBoletoAmounts(donationAmount);
   return calculateCardAmounts(donationAmount, 1, "master_visa");
@@ -226,10 +213,7 @@ export type CostCenterConfig = {
  * Busca configuração de um centro de custo, validando que pertence ao tenant
  * e está ativo. Lança erro caso contrário.
  */
-export async function fetchCostCenter(
-  costCenterId: string,
-  tenantId: string,
-): Promise<CostCenterConfig> {
+export async function fetchCostCenter(costCenterId: string, tenantId: string): Promise<CostCenterConfig> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { data, error } = await supabaseAdmin
     .from("cost_centers")
