@@ -157,6 +157,12 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method, costCent
   const [addrZip, setAddrZip] = useState("");
   const [addrCity, setAddrCity] = useState("");
   const [addrState, setAddrState] = useState("");
+  // Endereço do pagador (boleto)
+  const [boletoAddrLine, setBoletoAddrLine] = useState("");
+  const [boletoAddrZip, setBoletoAddrZip] = useState("");
+  const [boletoAddrCity, setBoletoAddrCity] = useState("");
+  const [boletoAddrState, setBoletoAddrState] = useState("");
+  const [boletoAddrNeighborhood, setBoletoAddrNeighborhood] = useState("");
 
   const [boleto, setBoleto] = useState<{
     code: string;
@@ -210,6 +216,11 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method, costCent
       setAddrZip("");
       setAddrCity("");
       setAddrState("");
+      setBoletoAddrLine("");
+      setBoletoAddrZip("");
+      setBoletoAddrCity("");
+      setBoletoAddrState("");
+      setBoletoAddrNeighborhood("");
       setBoleto(null);
       setPix(null);
       setCardResult(null);
@@ -352,6 +363,30 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method, costCent
     setError(null);
     try {
       if (isBoleto) {
+        const addrLineTrim = boletoAddrLine.trim();
+        const addrZipDigits = boletoAddrZip.replace(/\D/g, "");
+        const addrCityTrim = boletoAddrCity.trim();
+        const addrStateTrim = boletoAddrState.trim().toUpperCase();
+        if (addrLineTrim.length < 3) {
+          setError("Informe a rua e número (mín. 3 caracteres).");
+          setSubmitting(false);
+          return;
+        }
+        if (addrZipDigits.length !== 8) {
+          setError("Informe um CEP válido com 8 dígitos.");
+          setSubmitting(false);
+          return;
+        }
+        if (addrCityTrim.length < 2) {
+          setError("Informe a cidade.");
+          setSubmitting(false);
+          return;
+        }
+        if (!/^[A-Z]{2}$/.test(addrStateTrim)) {
+          setError("Informe a UF com 2 letras (ex.: SP).");
+          setSubmitting(false);
+          return;
+        }
         const result = await createBoleto({
           data: {
             tenantId: tenant.id,
@@ -360,6 +395,11 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method, costCent
             customerEmail: payer.email,
             customerDocument: payer.cpf,
             customerPhone: payer.phone,
+            customerAddressLine1: addrLineTrim,
+            customerAddressZip: addrZipDigits,
+            customerAddressCity: addrCityTrim,
+            customerAddressState: addrStateTrim,
+            customerAddressNeighborhood: boletoAddrNeighborhood.trim() || undefined,
           },
         });
         const due = result.dueAt ? new Date(result.dueAt) : addBusinessDays(new Date(), 3);
@@ -990,6 +1030,77 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method, costCent
                 </div>
               </div>
             )}
+
+            {isBoleto && (
+              <div className="mt-4 space-y-2.5 border-t border-[#E5E7EB] pt-4">
+                <div className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">
+                  Endereço do pagador
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-[#6B7280]">Rua e número *</label>
+                  <input
+                    type="text"
+                    value={boletoAddrLine}
+                    onChange={(e) => setBoletoAddrLine(e.target.value)}
+                    maxLength={200}
+                    placeholder="Rua Exemplo, 123"
+                    className="mt-1 h-11 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm text-[#111827] outline-none focus:border-[#7C3AED]"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-[#6B7280]">Bairro</label>
+                  <input
+                    type="text"
+                    value={boletoAddrNeighborhood}
+                    onChange={(e) => setBoletoAddrNeighborhood(e.target.value)}
+                    maxLength={100}
+                    placeholder="Bairro (opcional)"
+                    className="mt-1 h-11 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm text-[#111827] outline-none focus:border-[#7C3AED]"
+                  />
+                </div>
+                <div className="grid grid-cols-[1fr_80px] gap-2">
+                  <div>
+                    <label className="text-xs font-medium text-[#6B7280]">CEP *</label>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      value={boletoAddrZip}
+                      onChange={(e) => {
+                        const d = e.target.value.replace(/\D/g, "").slice(0, 8);
+                        const formatted = d.length > 5 ? `${d.slice(0, 5)}-${d.slice(5)}` : d;
+                        setBoletoAddrZip(formatted);
+                      }}
+                      placeholder="00000-000"
+                      className="mt-1 h-11 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm text-[#111827] outline-none focus:border-[#7C3AED]"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-[#6B7280]">UF *</label>
+                    <input
+                      type="text"
+                      value={boletoAddrState}
+                      onChange={(e) =>
+                        setBoletoAddrState(e.target.value.replace(/[^a-zA-Z]/g, "").slice(0, 2).toUpperCase())
+                      }
+                      placeholder="SP"
+                      className="mt-1 h-11 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm uppercase text-[#111827] outline-none focus:border-[#7C3AED]"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-[#6B7280]">Cidade *</label>
+                  <input
+                    type="text"
+                    value={boletoAddrCity}
+                    onChange={(e) => setBoletoAddrCity(e.target.value)}
+                    maxLength={80}
+                    placeholder="Cidade"
+                    className="mt-1 h-11 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm text-[#111827] outline-none focus:border-[#7C3AED]"
+                  />
+                </div>
+              </div>
+            )}
+
 
             {isCard && (
               <div className="mt-4 space-y-2.5 border-t border-[#E5E7EB] pt-4">
