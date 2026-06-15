@@ -121,9 +121,7 @@ async function pagarmeOrderCall(body: unknown): Promise<{
   const ok = res.ok;
   const errorMessage = ok
     ? null
-    : json?.message ||
-      (json?.errors && JSON.stringify(json.errors)) ||
-      `Erro ${res.status}`;
+    : json?.message || (json?.errors && JSON.stringify(json.errors)) || `Erro ${res.status}`;
   return {
     ok,
     status: res.status,
@@ -212,10 +210,7 @@ async function persistPayment(args: {
       .single();
     if (donErr || !donation) throw new Error(donErr?.message ?? "Falha ao registrar doação");
 
-    await supabaseAdmin
-      .from("payments")
-      .update({ reference_id: donation.id })
-      .eq("id", payment.id);
+    await supabaseAdmin.from("payments").update({ reference_id: donation.id }).eq("id", payment.id);
 
     return { paymentId: payment.id as string, donationId: donation.id as string };
   }
@@ -229,9 +224,7 @@ export const createPixPayment = createServerFn({ method: "POST" })
     const { assertFinancialActive } = await import("@/lib/compliance");
     await assertFinancialActive(data.tenantId);
     const sellerRecipientId = await fetchSellerRecipientId(data.tenantId);
-    const costCenter = data.costCenterId
-      ? await fetchCostCenter(data.costCenterId, data.tenantId)
-      : null;
+    const costCenter = data.costCenterId ? await fetchCostCenter(data.costCenterId, data.tenantId) : null;
     const splitOverride = costCenter?.split_platform_percent ?? null;
     const amounts = calculatePixAmounts(data.donationAmount, splitOverride);
     if (process.env.NODE_ENV !== "production") {
@@ -255,9 +248,7 @@ export const createPixPayment = createServerFn({ method: "POST" })
           payment_method: "pix",
           pix: {
             expires_in: expiresIn,
-            additional_information: [
-              { name: "Contribuição", value: resolved.name ?? "Anônimo" },
-            ],
+            additional_information: [{ name: "Contribuição", value: resolved.name ?? "Anônimo" }],
           },
         },
       ],
@@ -294,8 +285,7 @@ export const createPixPayment = createServerFn({ method: "POST" })
     const tx = charge?.last_transaction;
     const qrCode: string = tx?.qr_code ?? "";
     const qrCodeUrl: string = tx?.qr_code_url ?? "";
-    const expiresAt: string =
-      tx?.expires_at ?? new Date(Date.now() + expiresIn * 1000).toISOString();
+    const expiresAt: string = tx?.expires_at ?? new Date(Date.now() + expiresIn * 1000).toISOString();
     const gatewayId: string = json?.id ?? charge?.id ?? "";
 
     if (!gatewayId) {
@@ -311,9 +301,7 @@ export const createPixPayment = createServerFn({ method: "POST" })
         gatewayResponse: call.response,
         errorMessage: `Pagar.me não retornou identificador. Status: ${json?.status ?? "?"}`,
       });
-      throw new Error(
-        `Pagar.me não retornou identificador do pedido. Status: ${json?.status ?? "?"}.`,
-      );
+      throw new Error(`Pagar.me não retornou identificador do pedido. Status: ${json?.status ?? "?"}.`);
     }
 
     const ids = await persistPayment({
@@ -359,10 +347,10 @@ export const pollPixCharge = createServerFn({ method: "POST" })
     if (!secretKey) throw new Error("PAGARME_SECRET_KEY não configurada");
     const auth = "Basic " + Buffer.from(`${secretKey}:`).toString("base64");
 
-    const res = await fetch(
-      `https://api.pagar.me/core/v5/orders/${encodeURIComponent(data.gatewayId)}`,
-      { method: "GET", headers: { Authorization: auth } },
-    );
+    const res = await fetch(`https://api.pagar.me/core/v5/orders/${encodeURIComponent(data.gatewayId)}`, {
+      method: "GET",
+      headers: { Authorization: auth },
+    });
     const raw = await res.text();
     let json: any;
     try {
@@ -383,11 +371,7 @@ export const pollPixCharge = createServerFn({ method: "POST" })
     const chargeStatus: string = charge?.status ?? "";
 
     const mapped: "paid" | "failed" | null =
-      chargeStatus === "paid"
-        ? "paid"
-        : chargeStatus === "failed" || chargeStatus === "refused"
-          ? "failed"
-          : null;
+      chargeStatus === "paid" ? "paid" : chargeStatus === "failed" || chargeStatus === "refused" ? "failed" : null;
 
     if (mapped) {
       const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -401,21 +385,12 @@ export const pollPixCharge = createServerFn({ method: "POST" })
   });
 
 export const createCreditCardPayment = createServerFn({ method: "POST" })
-  .inputValidator((data: unknown) => {
-    const result = CardInput.safeParse(data);
-    if (!result.success) {
-      console.error("[card] zod validation failed", JSON.stringify(result.error.issues, null, 2));
-      throw new Error("The request is invalid. " + JSON.stringify(result.error.issues));
-    }
-    return result.data;
-  })
+  .inputValidator((data: unknown) => CardInput.parse(data))
   .handler(async ({ data }) => {
     const { assertFinancialActive } = await import("@/lib/compliance");
     await assertFinancialActive(data.tenantId);
     const sellerRecipientId = await fetchSellerRecipientId(data.tenantId);
-    const costCenter = data.costCenterId
-      ? await fetchCostCenter(data.costCenterId, data.tenantId)
-      : null;
+    const costCenter = data.costCenterId ? await fetchCostCenter(data.costCenterId, data.tenantId) : null;
     if (costCenter) {
       if (!costCenter.allows_installments && data.installments > 1) {
         throw new Error("Este centro de custo não permite parcelamento.");
@@ -507,11 +482,7 @@ export const createCreditCardPayment = createServerFn({ method: "POST" })
     const gatewayId: string = json?.id ?? charge?.id ?? "";
 
     const mapped: "pending" | "confirmed" | "failed" =
-      status === "paid"
-        ? "confirmed"
-        : status === "failed" || status === "refused"
-          ? "failed"
-          : "pending";
+      status === "paid" ? "confirmed" : status === "failed" || status === "refused" ? "failed" : "pending";
 
     const ids = await persistPayment({
       tenantId: data.tenantId,
