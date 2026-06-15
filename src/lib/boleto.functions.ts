@@ -1,10 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import {
-  buildSplitPayload,
-  calculateBoletoAmounts,
-  fetchSellerRecipientId,
-} from "./split.utils";
+import { buildSplitPayload, calculateBoletoAmounts, fetchSellerRecipientId } from "./split.utils";
 import { buildPagarmeCustomer, resolveCustomer, validateDocument } from "./payments-customer";
 
 const InputSchema = z.object({
@@ -57,17 +53,15 @@ export const createBoletoPayment = createServerFn({ method: "POST" })
       .select("cep, rua, numero, neighborhood, city, uf, estado")
       .eq("tenant_id", data.tenantId)
       .maybeSingle();
-    const addrRow = tAddr as
-      | {
-          cep?: string | null;
-          rua?: string | null;
-          numero?: string | null;
-          neighborhood?: string | null;
-          city?: string | null;
-          uf?: string | null;
-          estado?: string | null;
-        }
-      | null;
+    const addrRow = tAddr as {
+      cep?: string | null;
+      rua?: string | null;
+      numero?: string | null;
+      neighborhood?: string | null;
+      city?: string | null;
+      uf?: string | null;
+      estado?: string | null;
+    } | null;
 
     const customer = {
       ...buildPagarmeCustomer(resolved),
@@ -102,7 +96,6 @@ export const createBoletoPayment = createServerFn({ method: "POST" })
         {
           payment_method: "boleto",
           boleto: {
-            bank: tenantBankAccount?.bank_code ?? "077",
             due_at: dueAt,
             instructions: "Obrigado pela sua contribuição!",
             document_number: `CONTRIB-${Date.now()}`,
@@ -145,9 +138,7 @@ export const createBoletoPayment = createServerFn({ method: "POST" })
         sentPayload: orderPayload,
       });
       const msg =
-        json?.message ||
-        (json?.errors && JSON.stringify(json.errors)) ||
-        `Erro ${res.status} ao criar boleto`;
+        json?.message || (json?.errors && JSON.stringify(json.errors)) || `Erro ${res.status} ao criar boleto`;
       throw new Error(msg);
     }
 
@@ -203,10 +194,7 @@ export const createBoletoPayment = createServerFn({ method: "POST" })
       .single();
     if (donErr || !donation) throw new Error(donErr?.message ?? "Falha ao registrar doação");
 
-    await supabaseAdmin
-      .from("payments")
-      .update({ reference_id: donation.id })
-      .eq("id", payment.id);
+    await supabaseAdmin.from("payments").update({ reference_id: donation.id }).eq("id", payment.id);
 
     return {
       paymentId: payment.id as string,
