@@ -1,12 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
-// =====================================================================
-// provisionTenant — server function única para os dois fluxos de onboarding
-// (Super Admin completo + auto-cadastro mínimo). Aceita objeto rico, mas
-// só exige a identidade básica (church_name + document).
-// =====================================================================
-
 const HEX = /^#[0-9A-Fa-f]{6}$/;
 
 const BrandingSchema = z
@@ -36,7 +30,10 @@ const LegalResponsibleSchema = z
     full_name: z.string().trim().min(2).max(160),
     cpf: z.string().trim().min(11).max(14),
     email: z.string().trim().email().max(200).optional(),
-    birth_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+    birth_date: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/)
+      .optional(),
     mother_name: z.string().trim().max(160).optional(),
     role: z.string().trim().max(80).optional(),
     monthly_revenue: z.number().nonnegative().optional(),
@@ -68,7 +65,10 @@ const BankSchema = z
   .object({
     bank_code: z.string().regex(/^\d{3}$/),
     branch: z.string().regex(/^\d{1,5}$/),
-    branch_digit: z.string().regex(/^[0-9Xx]$/).optional(),
+    branch_digit: z
+      .string()
+      .regex(/^[0-9Xx]$/)
+      .optional(),
     account: z.string().regex(/^\d{1,12}$/),
     account_digit: z.string().regex(/^[0-9Xx]$/),
     account_type: z.enum(["checking", "checking_joint", "savings", "savings_joint"]),
@@ -135,10 +135,9 @@ async function lookupPagarmeRecipient(recipientId: string): Promise<PagarmeLooku
   const key = process.env.PAGARME_SECRET_KEY;
   if (!key) return { status: null, found: false };
   const auth = "Basic " + Buffer.from(`${key}:`).toString("base64");
-  const res = await fetch(
-    `https://api.pagar.me/core/v5/recipients/${encodeURIComponent(recipientId)}`,
-    { headers: { Authorization: auth } },
-  );
+  const res = await fetch(`https://api.pagar.me/core/v5/recipients/${encodeURIComponent(recipientId)}`, {
+    headers: { Authorization: auth },
+  });
   if (res.status === 404) return { status: null, found: false };
   if (!res.ok) return { status: null, found: false };
   const json: any = await res.json().catch(() => null);
@@ -160,21 +159,31 @@ export const provisionTenant = createServerFn({ method: "POST" })
   .handler(async ({ data }: { data: Input }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const warnings: string[] = [];
+    const origin = process.env.PUBLIC_SITE_URL || "https://tk2projeto1.lovable.app";
 
     const onlyDigitsDoc = data.document.replace(/\D/g, "");
 
-    // 0. Documento já cadastrado? Reutilizar se ainda não tem usuário vinculado.
-    async function findReusableTenant(): Promise<string | null> {
+    // ── CORREÇÃO: findReusableTenant retorna dados reais do tenant ────────
+    async function findReusableTenant(): Promise<{
+      tenant_id: string;
+      slug: string;
+      public_url: string;
+      qr_code_url: string;
+      cost_center_id: string | null;
+      compliance_status: string;
+      warnings: string[];
+    } | null> {
       const { data: existing, error: exErr } = await supabaseAdmin
         .from("tenants")
-        .select("id, compliance_status")
+        .select("id, slug, qr_code_url, compliance_status")
         .eq("document", onlyDigitsDoc)
         .is("deleted_at", null)
         .maybeSingle();
+
       if (exErr) throw new Error(exErr.message);
       if (!existing) return null;
 
-      const status = (existing as { compliance_status: string | null }).compliance_status;
+      const status = (existing as any).compliance_status as string | null;
       const reusableStatus =
         status === "pending_documents" ||
         status === "pending" ||
@@ -186,39 +195,48 @@ export const provisionTenant = createServerFn({ method: "POST" })
         .select("user_id", { count: "exact", head: true })
         .eq("tenant_id", existing.id);
 
-      if (reusableStatus && (count ?? 0) === 0) {
-        return existing.id as string;
+      if (!reusableStatus || (count ?? 0) > 0) {
+        // Tenant ativo com usuário → erro real de duplicidade
+        throw new Error("Esta instituição já possui cadastro ativo.");
       }
-      throw new Error("Esta instituição já possui cadastro ativo.");
-    }
 
-    const reusableId = await findReusableTenant();
-    if (reusableId) {
+      // Tenant reutilizável — buscar dados reais
+      const slug = (existing as any).slug ?? "";
+      const publicUrl = slug ? `${origin}/i/${slug}` : "";
+      const qrCodeUrl = (existing as any).qr_code_url ?? "";
+
+      // Buscar cost_center existente
+      const { data: cc } = await supabaseAdmin
+        .from("cost_centers")
+        .select("id")
+        .eq("tenant_id", existing.id)
+        .eq("slug", "online")
+        .maybeSingle();
+
       return {
-        tenant_id: reusableId,
-        slug: "",
-        public_url: "",
-        qr_code_url: "",
-        cost_center_id: null,
-        compliance_status: "pending_documents",
+        tenant_id: existing.id as string,
+        slug,
+        public_url: publicUrl,
+        qr_code_url: qrCodeUrl,
+        cost_center_id: (cc as any)?.id ?? null,
+        compliance_status: status ?? "pending_documents",
         warnings: [],
       };
     }
+
+    const reusable = await findReusableTenant();
+    if (reusable) return reusable;
 
     // 1. Slug único
     const base = slugify(data.church_name) || `igreja-${Date.now()}`;
     let slug = base;
     for (let i = 1; i < 50; i++) {
-      const { data: clash } = await supabaseAdmin
-        .from("tenants")
-        .select("id")
-        .eq("slug", slug)
-        .maybeSingle();
+      const { data: clash } = await supabaseAdmin.from("tenants").select("id").eq("slug", slug).maybeSingle();
       if (!clash) break;
       slug = `${base}-${i}`;
     }
 
-    // 2. Insert tenant (identidade + branding + institucional)
+    // 2. Insert tenant
     const inst = data.institution ?? {};
     const br = data.branding ?? {};
     const tenantInsert: Record<string, unknown> = {
@@ -248,44 +266,33 @@ export const provisionTenant = createServerFn({ method: "POST" })
       .insert(tenantInsert as any)
       .select("id")
       .single();
+
     if (cErr || !created) {
       // Race condition: documento inserido entre o check e o insert
       if ((cErr as { code?: string } | null)?.code === "23505") {
-        const reusedId = await findReusableTenant();
-        if (reusedId) {
-          return {
-            tenant_id: reusedId,
-            slug: "",
-            public_url: "",
-            qr_code_url: "",
-            cost_center_id: null,
-            compliance_status: "pending_documents",
-            warnings: [],
-          };
-        }
+        const reusedData = await findReusableTenant();
+        if (reusedData) return reusedData;
       }
       throw new Error(cErr?.message || "Falha ao criar a instituição.");
     }
     const tenantId = created.id as string;
 
-    // 3. Sementes de pendências (3 obrigatórios + 3 opcionais)
+    // 3. Sementes de pendências
     await supabaseAdmin.rpc("seed_tenant_pending_documents" as any, { _tenant_id: tenantId });
 
-    // 4. Blocos auxiliares (todos opcionais)
+    // 4. Blocos auxiliares
     if (data.legal_responsible) {
       const lr = data.legal_responsible;
-      const { error } = await supabaseAdmin
-        .from("tenant_legal_responsible" as any)
-        .insert({
-          tenant_id: tenantId,
-          full_name: lr.full_name,
-          cpf: lr.cpf.replace(/\D/g, ""),
-          email: lr.email,
-          birth_date: lr.birth_date,
-          mother_name: lr.mother_name,
-          role: lr.role,
-          monthly_revenue: lr.monthly_revenue,
-        });
+      const { error } = await supabaseAdmin.from("tenant_legal_responsible" as any).insert({
+        tenant_id: tenantId,
+        full_name: lr.full_name,
+        cpf: lr.cpf.replace(/\D/g, ""),
+        email: lr.email,
+        birth_date: lr.birth_date,
+        mother_name: lr.mother_name,
+        role: lr.role,
+        monthly_revenue: lr.monthly_revenue,
+      });
       if (error) warnings.push(`responsável legal: ${error.message}`);
     }
 
@@ -308,9 +315,9 @@ export const provisionTenant = createServerFn({ method: "POST" })
     }
 
     if (data.phones?.length) {
-      const { error } = await supabaseAdmin.from("tenant_contact_phone" as any).insert(
-        data.phones.map((p) => ({ tenant_id: tenantId, ...p })),
-      );
+      const { error } = await supabaseAdmin
+        .from("tenant_contact_phone" as any)
+        .insert(data.phones.map((p) => ({ tenant_id: tenantId, ...p })));
       if (error) warnings.push(`telefones: ${error.message}`);
     }
 
@@ -323,7 +330,7 @@ export const provisionTenant = createServerFn({ method: "POST" })
       if (error) warnings.push(`banco: ${error.message}`);
     }
 
-    // 5. Pagar.me: estratégia híbrida — apenas localizar/validar, nunca criar.
+    // 5. Pagar.me
     const fin = data.financial ?? {};
     const usePagarme = fin.use_pagarme !== false;
     let recipientStatus: string | null = null;
@@ -359,7 +366,7 @@ export const provisionTenant = createServerFn({ method: "POST" })
       if (error) warnings.push(`config financeira: ${error.message}`);
     }
 
-    // 6. Cost center "Online" padrão
+    // 6. Cost center "Online"
     const splitSeller = Number((1 - splitPlatform).toFixed(6));
     const { data: cc, error: ccErr } = await supabaseAdmin
       .from("cost_centers")
@@ -379,8 +386,7 @@ export const provisionTenant = createServerFn({ method: "POST" })
     if (ccErr || !cc) throw new Error(`Falha ao criar centro de custo padrão: ${ccErr?.message ?? "?"}`);
     const costCenterId = cc.id as string;
 
-    // 7. QR Code para /i/{slug}
-    const origin = process.env.PUBLIC_SITE_URL || "https://tk2projeto1.lovable.app";
+    // 7. QR Code
     const publicUrl = `${origin}/i/${slug}`;
     let qrCodeUrl: string | null = null;
     try {
@@ -390,21 +396,18 @@ export const provisionTenant = createServerFn({ method: "POST" })
       console.warn("[onboarding] falha ao gerar QR:", e);
     }
 
-    // 8. Admin (opcional)
+    // 8. Admin
     if (data.admin) {
-      const { data: invited, error: invErr } = await supabaseAdmin.auth.admin.inviteUserByEmail(
-        data.admin.email,
-        {
-          data: {
-            full_name: data.admin.full_name ?? "",
-            phone: data.admin.phone ?? "",
-            tenant_id: tenantId,
-            is_tenant_founder: true,
-            lgpd_consent: true,
-          },
-          redirectTo: `${origin}/login?confirmed=1`,
+      const { data: invited, error: invErr } = await supabaseAdmin.auth.admin.inviteUserByEmail(data.admin.email, {
+        data: {
+          full_name: data.admin.full_name ?? "",
+          phone: data.admin.phone ?? "",
+          tenant_id: tenantId,
+          is_tenant_founder: true,
+          lgpd_consent: true,
         },
-      );
+        redirectTo: `${origin}/login?confirmed=1`,
+      });
       if (invErr) {
         warnings.push(`convite admin: ${invErr.message}`);
       } else if (invited?.user?.id) {
@@ -417,11 +420,8 @@ export const provisionTenant = createServerFn({ method: "POST" })
       }
     }
 
-    // 9. Recompute compliance (triggers já cuidam, mas garantimos o estado final)
-    const { data: status } = await supabaseAdmin.rpc(
-      "recompute_tenant_compliance" as any,
-      { _tenant_id: tenantId },
-    );
+    // 9. Recompute compliance
+    const { data: status } = await supabaseAdmin.rpc("recompute_tenant_compliance" as any, { _tenant_id: tenantId });
 
     return {
       tenant_id: tenantId,
@@ -434,5 +434,5 @@ export const provisionTenant = createServerFn({ method: "POST" })
     };
   });
 
-// Alias retrocompatível para o auto-cadastro público.
+// Alias retrocompatível
 export const reserveTenantForSignup = provisionTenant;
