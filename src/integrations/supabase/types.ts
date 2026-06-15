@@ -1468,12 +1468,7 @@ export type Database = {
       tenants: {
         Row: {
           accent_color: string | null
-          account_type: string | null
           active: boolean
-          bank_account: string | null
-          bank_account_dv: string | null
-          bank_agency: string | null
-          bank_code: string | null
           compliance_status: Database["public"]["Enums"]["tenant_compliance_status"]
           cover_photo_url: string | null
           created_at: string
@@ -1484,8 +1479,6 @@ export type Database = {
           document: string | null
           document_type: string | null
           financial_active: boolean
-          holder_document: string | null
-          holder_name: string | null
           id: string
           institutional_email: string | null
           legal_name: string | null
@@ -1505,12 +1498,7 @@ export type Database = {
         }
         Insert: {
           accent_color?: string | null
-          account_type?: string | null
           active?: boolean
-          bank_account?: string | null
-          bank_account_dv?: string | null
-          bank_agency?: string | null
-          bank_code?: string | null
           compliance_status?: Database["public"]["Enums"]["tenant_compliance_status"]
           cover_photo_url?: string | null
           created_at?: string
@@ -1521,8 +1509,6 @@ export type Database = {
           document?: string | null
           document_type?: string | null
           financial_active?: boolean
-          holder_document?: string | null
-          holder_name?: string | null
           id?: string
           institutional_email?: string | null
           legal_name?: string | null
@@ -1542,12 +1528,7 @@ export type Database = {
         }
         Update: {
           accent_color?: string | null
-          account_type?: string | null
           active?: boolean
-          bank_account?: string | null
-          bank_account_dv?: string | null
-          bank_agency?: string | null
-          bank_code?: string | null
           compliance_status?: Database["public"]["Enums"]["tenant_compliance_status"]
           cover_photo_url?: string | null
           created_at?: string
@@ -1558,8 +1539,6 @@ export type Database = {
           document?: string | null
           document_type?: string | null
           financial_active?: boolean
-          holder_document?: string | null
-          holder_name?: string | null
           id?: string
           institutional_email?: string | null
           legal_name?: string | null
