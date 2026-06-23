@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { KpiCard } from "@/components/kpi-card";
-import { Users, UserCheck, DollarSign, Calendar, Ticket, Activity } from "lucide-react";
+import { Users, UserCheck, DollarSign, Calendar, Ticket } from "lucide-react";
 import {
   ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, BarChart, Bar, CartesianGrid,
 } from "recharts";
@@ -21,7 +21,7 @@ function ManagerDashboard() {
   const [kpis, setKpis] = useState<Kpis>({ total: 0, active: 0, pending: 0, donationsMonth: 0, eventsMonth: 0, ticketsMonth: 0 });
   const [donationSeries, setDonationSeries] = useState<{ month: string; total: number }[]>([]);
   const [attendance, setAttendance] = useState<{ event: string; count: number }[]>([]);
-  const [activity, setActivity] = useState<{ id: string; action: string; entity: string | null; created_at: string }[]>([]);
+  
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -29,14 +29,13 @@ function ManagerDashboard() {
       const startMonth = startOfMonth(new Date()).toISOString();
       const endMonthIso = endOfMonth(new Date()).toISOString();
 
-      const [profilesRes, donationsAllRes, donationsMonthRes, eventsMonthRes, ticketsMonthRes, eventsAttRes, auditRes] = await Promise.all([
+      const [profilesRes, donationsAllRes, donationsMonthRes, eventsMonthRes, ticketsMonthRes, eventsAttRes] = await Promise.all([
         supabase.from("profiles").select("id, status, created_at"),
         supabase.from("donations").select("amount, created_at"),
         supabase.from("donations").select("amount").gte("created_at", startMonth).lte("created_at", endMonthIso),
         supabase.from("events").select("id").gte("date", startMonth).lte("date", endMonthIso),
         supabase.from("tickets").select("id").gte("created_at", startMonth).lte("created_at", endMonthIso),
         supabase.from("events").select("id, title, tickets(count)").order("date", { ascending: false }).limit(8),
-        supabase.from("audit_logs").select("id, action, entity, created_at").order("created_at", { ascending: false }).limit(10),
       ]);
 
       const profiles = profilesRes.data ?? [];
@@ -68,7 +67,7 @@ function ManagerDashboard() {
       }));
       setAttendance(att);
 
-      setActivity(auditRes.data ?? []);
+      
       setLoading(false);
     })();
   }, []);
@@ -118,21 +117,6 @@ function ManagerDashboard() {
         </Card>
       </div>
 
-      <Card className="p-4">
-        <h2 className="mb-3 flex items-center gap-2 font-medium"><Activity className="h-4 w-4" /> Atividade recente</h2>
-        {activity.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Sem registros ainda.</p>
-        ) : (
-          <ul className="divide-y">
-            {activity.map((a) => (
-              <li key={a.id} className="flex items-center justify-between py-2 text-sm">
-                <span><strong>{a.action}</strong> {a.entity && <span className="text-muted-foreground">em {a.entity}</span>}</span>
-                <span className="text-xs text-muted-foreground">{format(new Date(a.created_at), "dd/MM HH:mm")}</span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </Card>
     </div>
   );
 }
