@@ -13,14 +13,12 @@ function ManageLayout() {
   if (loading) return null;
   if (!isStaff) {
     return (
-      <Card className="p-8 text-center text-muted-foreground">
-        Acesso restrito a gestores.
-      </Card>
+      <Card className="p-8 text-center text-muted-foreground">Acesso restrito a gestores.</Card>
     );
   }
   return (
-    <SidebarProvider>
-      <div className="flex min-h-[calc(100vh-4rem)] w-full -mx-6 -my-8">
+    <SidebarProvider className="min-h-0">
+      <div className="relative flex min-h-[calc(100vh-4rem)] w-full -mx-6 -my-8 [transform:translateZ(0)]">
         <ManagerSidebar />
         <div className="flex flex-1 flex-col">
           <header className="flex h-12 items-center border-b bg-card/60 backdrop-blur">
