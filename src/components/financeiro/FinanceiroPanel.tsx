@@ -10,12 +10,24 @@ import {
   getRecipientBalance,
   getRecipientTransfers,
   getRecipientAnticipations,
+  getRecipientTransactionsSummary,
+  getRecipientPayments,
 } from "@/lib/recipient.functions";
 import { BalanceCards } from "./BalanceCards";
 import { TransfersTable } from "./TransfersTable";
 import { AnticipationsTable } from "./AnticipationsTable";
 import { AnticipationModal } from "./AnticipationModal";
+import { ExtractSummaryCards } from "./ExtractSummaryCards";
+import { PaymentsTable } from "./PaymentsTable";
 import { brl } from "./format";
+
+function last7DaysRange() {
+  const end = new Date();
+  const start = new Date();
+  start.setDate(start.getDate() - 6);
+  const toIso = (d: Date) => d.toISOString().slice(0, 10);
+  return { periodStart: toIso(start), periodEnd: toIso(end) };
+}
 
 export function FinanceiroPanel({
   scope,
@@ -32,10 +44,13 @@ export function FinanceiroPanel({
 }) {
   const qc = useQueryClient();
   const [openModal, setOpenModal] = useState(false);
+  const [period] = useState(last7DaysRange);
 
   const balanceFn = useServerFn(getRecipientBalance);
   const transfersFn = useServerFn(getRecipientTransfers);
   const anticipationsFn = useServerFn(getRecipientAnticipations);
+  const summaryFn = useServerFn(getRecipientTransactionsSummary);
+  const paymentsFn = useServerFn(getRecipientPayments);
 
   const balance = useQuery({
     queryKey: ["pagarme-balance", scope],
@@ -49,11 +64,23 @@ export function FinanceiroPanel({
     queryKey: ["pagarme-anticipations", scope],
     queryFn: () => anticipationsFn({ data: { scope, page: 1, size: 20 } }),
   });
+  const summary = useQuery({
+    queryKey: ["extrato-summary", scope, period],
+    queryFn: () => summaryFn({ data: period }),
+    enabled: scope === "tenant",
+  });
+  const payments = useQuery({
+    queryKey: ["extrato-payments", scope, period],
+    queryFn: () => paymentsFn({ data: { ...period, page: 1, size: 20 } }),
+    enabled: scope === "tenant",
+  });
 
   const refetchAll = () => {
     qc.invalidateQueries({ queryKey: ["pagarme-balance", scope] });
     qc.invalidateQueries({ queryKey: ["pagarme-transfers", scope] });
     qc.invalidateQueries({ queryKey: ["pagarme-anticipations", scope] });
+    qc.invalidateQueries({ queryKey: ["extrato-summary", scope] });
+    qc.invalidateQueries({ queryKey: ["extrato-payments", scope] });
   };
 
   return (
@@ -68,9 +95,10 @@ export function FinanceiroPanel({
         </Button>
       </header>
 
-      <Tabs defaultValue="resumo">
+      <Tabs defaultValue={scope === "tenant" ? "extrato" : "resumo"}>
         <TabsList>
           <TabsTrigger value="resumo">Resumo</TabsTrigger>
+          {scope === "tenant" && <TabsTrigger value="extrato">Extrato</TabsTrigger>}
           <TabsTrigger value="transferencias">Transferências</TabsTrigger>
           <TabsTrigger value="antecipacoes">Antecipações</TabsTrigger>
         </TabsList>
@@ -80,8 +108,14 @@ export function FinanceiroPanel({
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
               <AlertDescription className="flex items-center justify-between gap-2">
-                <span>{balance.error instanceof Error ? balance.error.message : "Erro ao carregar saldo"}</span>
-                <Button size="sm" variant="outline" onClick={() => balance.refetch()}>Tentar novamente</Button>
+                <span>
+                  {balance.error instanceof Error
+                    ? balance.error.message
+                    : "Erro ao carregar saldo"}
+                </span>
+                <Button size="sm" variant="outline" onClick={() => balance.refetch()}>
+                  Tentar novamente
+                </Button>
               </AlertDescription>
             </Alert>
           )}
@@ -89,11 +123,43 @@ export function FinanceiroPanel({
           {platformSummary}
         </TabsContent>
 
+        {scope === "tenant" && (
+          <TabsContent value="extrato" className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              {period.periodStart.split("-").reverse().join("/")} até{" "}
+              {period.periodEnd.split("-").reverse().join("/")}
+            </p>
+            {summary.error ? (
+              <ErrorBlock
+                message={summary.error instanceof Error ? summary.error.message : "Erro"}
+                onRetry={() => summary.refetch()}
+              />
+            ) : (
+              <ExtractSummaryCards summary={summary.data} loading={summary.isLoading} />
+            )}
+            {payments.error ? (
+              <ErrorBlock
+                message={payments.error instanceof Error ? payments.error.message : "Erro"}
+                onRetry={() => payments.refetch()}
+              />
+            ) : (
+              <PaymentsTable items={payments.data?.items} loading={payments.isLoading} />
+            )}
+          </TabsContent>
+        )}
+
         <TabsContent value="transferencias" className="space-y-4">
           {transfers.error ? (
-            <ErrorBlock message={transfers.error instanceof Error ? transfers.error.message : "Erro"} onRetry={() => transfers.refetch()} />
+            <ErrorBlock
+              message={transfers.error instanceof Error ? transfers.error.message : "Erro"}
+              onRetry={() => transfers.refetch()}
+            />
           ) : (
-            <TransfersTable items={transfers.data?.items} loading={transfers.isLoading} showRecipient={scope === "platform"} />
+            <TransfersTable
+              items={transfers.data?.items}
+              loading={transfers.isLoading}
+              showRecipient={scope === "platform"}
+            />
           )}
         </TabsContent>
 
@@ -101,15 +167,23 @@ export function FinanceiroPanel({
           <div className="grid gap-4 sm:grid-cols-2">
             <Card>
               <CardContent className="p-5">
-                <p className="text-xs uppercase tracking-wider text-muted-foreground">Saldo a receber</p>
-                <p className="mt-2 font-display text-2xl">{brl(balance.data?.waiting_funds?.amount)}</p>
+                <p className="text-xs uppercase tracking-wider text-muted-foreground">
+                  Saldo a receber
+                </p>
+                <p className="mt-2 font-display text-2xl">
+                  {brl(balance.data?.waiting_funds?.amount)}
+                </p>
               </CardContent>
             </Card>
             <Card>
               <CardContent className="p-5 flex items-center justify-between">
                 <div>
-                  <p className="text-xs uppercase tracking-wider text-muted-foreground">Disponível para antecipação</p>
-                  <p className="mt-2 font-display text-2xl">{brl(balance.data?.waiting_funds?.amount)}</p>
+                  <p className="text-xs uppercase tracking-wider text-muted-foreground">
+                    Disponível para antecipação
+                  </p>
+                  <p className="mt-2 font-display text-2xl">
+                    {brl(balance.data?.waiting_funds?.amount)}
+                  </p>
                 </div>
                 <Button onClick={() => setOpenModal(true)}>Simular antecipação</Button>
               </CardContent>
@@ -117,9 +191,16 @@ export function FinanceiroPanel({
           </div>
 
           {anticipations.error ? (
-            <ErrorBlock message={anticipations.error instanceof Error ? anticipations.error.message : "Erro"} onRetry={() => anticipations.refetch()} />
+            <ErrorBlock
+              message={anticipations.error instanceof Error ? anticipations.error.message : "Erro"}
+              onRetry={() => anticipations.refetch()}
+            />
           ) : (
-            <AnticipationsTable items={anticipations.data?.items} loading={anticipations.isLoading} showFeeDetails={showFeeDetails} />
+            <AnticipationsTable
+              items={anticipations.data?.items}
+              loading={anticipations.isLoading}
+              showFeeDetails={showFeeDetails}
+            />
           )}
         </TabsContent>
       </Tabs>
@@ -141,7 +222,9 @@ function ErrorBlock({ message, onRetry }: { message: string; onRetry: () => void
       <AlertCircle className="h-4 w-4" />
       <AlertDescription className="flex items-center justify-between gap-2">
         <span>{message}</span>
-        <Button size="sm" variant="outline" onClick={onRetry}>Tentar novamente</Button>
+        <Button size="sm" variant="outline" onClick={onRetry}>
+          Tentar novamente
+        </Button>
       </AlertDescription>
     </Alert>
   );

@@ -8,7 +8,8 @@ function authHeader() {
   const key = process.env.PAGARME_SECRET_KEY;
   if (!key) throw new Error("PAGARME_SECRET_KEY não configurado");
   // btoa is available in Workers / browsers; use Buffer fallback if needed
-  const token = typeof btoa === "function" ? btoa(`${key}:`) : Buffer.from(`${key}:`).toString("base64");
+  const token =
+    typeof btoa === "function" ? btoa(`${key}:`) : Buffer.from(`${key}:`).toString("base64");
   return `Basic ${token}`;
 }
 
@@ -24,9 +25,16 @@ async function pagarme<T = unknown>(path: string, init?: RequestInit): Promise<T
   });
   const text = await res.text();
   let body: unknown = null;
-  try { body = text ? JSON.parse(text) : null; } catch { body = text; }
+  try {
+    body = text ? JSON.parse(text) : null;
+  } catch {
+    body = text;
+  }
   if (!res.ok) {
-    const msg = typeof body === "object" && body && "message" in body ? (body as { message?: string }).message : res.statusText;
+    const msg =
+      typeof body === "object" && body && "message" in body
+        ? (body as { message?: string }).message
+        : res.statusText;
     throw new Error(`Pagar.me ${res.status}: ${msg ?? "erro"}`);
   }
   return body as T;
@@ -35,7 +43,10 @@ async function pagarme<T = unknown>(path: string, init?: RequestInit): Promise<T
 /** Resolve recipientId based on scope: tenant uses tenant_payment_settings; platform uses PLATFORM_RECIPIENT_ID. */
 async function resolveRecipientId(
   scope: "tenant" | "platform",
-  ctx: { supabase: ReturnType<typeof import("@supabase/supabase-js").createClient>; userId: string },
+  ctx: {
+    supabase: ReturnType<typeof import("@supabase/supabase-js").createClient>;
+    userId: string;
+  },
 ): Promise<string> {
   if (scope === "platform") {
     // Verify platform role
@@ -66,7 +77,8 @@ async function resolveRecipientId(
     .eq("tenant_id", tenantId)
     .maybeSingle();
   const recId = (tps as { pagarme_recipient_id?: string | null } | null)?.pagarme_recipient_id;
-  if (!recId) throw new Error("Esta instituição ainda não está habilitada para receber pagamentos.");
+  if (!recId)
+    throw new Error("Esta instituição ainda não está habilitada para receber pagamentos.");
   return recId;
 }
 
@@ -91,13 +103,24 @@ export type TransferItem = {
   amount: number;
   status: string;
   created_at: string;
-  bank_account?: { holder_name?: string; bank?: string; branch_number?: string; account_number?: string };
+  bank_account?: {
+    holder_name?: string;
+    bank?: string;
+    branch_number?: string;
+    account_number?: string;
+  };
 };
 
 export const getRecipientTransfers = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { scope: "tenant" | "platform"; page?: number; size?: number }) =>
-    z.object({ scope: Scope, page: z.number().int().min(1).default(1), size: z.number().int().min(1).max(100).default(20) }).parse(d),
+    z
+      .object({
+        scope: Scope,
+        page: z.number().int().min(1).default(1),
+        size: z.number().int().min(1).max(100).default(20),
+      })
+      .parse(d),
   )
   .handler(async ({ data, context }) => {
     const recipientId = await resolveRecipientId(data.scope, context as never);
@@ -121,7 +144,13 @@ export type AnticipationItem = {
 export const getRecipientAnticipations = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { scope: "tenant" | "platform"; page?: number; size?: number }) =>
-    z.object({ scope: Scope, page: z.number().int().min(1).default(1), size: z.number().int().min(1).max(100).default(20) }).parse(d),
+    z
+      .object({
+        scope: Scope,
+        page: z.number().int().min(1).default(1),
+        size: z.number().int().min(1).max(100).default(20),
+      })
+      .parse(d),
   )
   .handler(async ({ data, context }) => {
     const recipientId = await resolveRecipientId(data.scope, context as never);
@@ -133,12 +162,15 @@ export const getRecipientAnticipations = createServerFn({ method: "POST" })
 
 export const getAnticipationLimits = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { scope: "tenant" | "platform"; timeframe?: "start" | "end"; payment_date?: string }) =>
-    z.object({
-      scope: Scope,
-      timeframe: z.enum(["start", "end"]).default("start"),
-      payment_date: z.string().optional(),
-    }).parse(d),
+  .inputValidator(
+    (d: { scope: "tenant" | "platform"; timeframe?: "start" | "end"; payment_date?: string }) =>
+      z
+        .object({
+          scope: Scope,
+          timeframe: z.enum(["start", "end"]).default("start"),
+          payment_date: z.string().optional(),
+        })
+        .parse(d),
   )
   .handler(async ({ data, context }) => {
     const recipientId = await resolveRecipientId(data.scope, context as never);
@@ -146,18 +178,28 @@ export const getAnticipationLimits = createServerFn({ method: "POST" })
     return pagarme<{
       maximum?: { amount: number; anticipation_fee?: number; fee?: number };
       minimum?: { amount: number };
-    }>(`/recipients/${recipientId}/anticipation_limits?timeframe=${data.timeframe}&payment_date=${date}`);
+    }>(
+      `/recipients/${recipientId}/anticipation_limits?timeframe=${data.timeframe}&payment_date=${date}`,
+    );
   });
 
 export const simulateAnticipation = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { scope: "tenant" | "platform"; amount: number; timeframe: "start" | "end"; payment_date: string }) =>
-    z.object({
-      scope: Scope,
-      amount: z.number().int().positive(),
-      timeframe: z.enum(["start", "end"]),
-      payment_date: z.string().min(8),
-    }).parse(d),
+  .inputValidator(
+    (d: {
+      scope: "tenant" | "platform";
+      amount: number;
+      timeframe: "start" | "end";
+      payment_date: string;
+    }) =>
+      z
+        .object({
+          scope: Scope,
+          amount: z.number().int().positive(),
+          timeframe: z.enum(["start", "end"]),
+          payment_date: z.string().min(8),
+        })
+        .parse(d),
   )
   .handler(async ({ data, context }) => {
     const recipientId = await resolveRecipientId(data.scope, context as never);
@@ -179,13 +221,21 @@ export const simulateAnticipation = createServerFn({ method: "POST" })
 
 export const requestAnticipation = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { scope: "tenant" | "platform"; amount: number; timeframe: "start" | "end"; payment_date: string }) =>
-    z.object({
-      scope: Scope,
-      amount: z.number().int().positive(),
-      timeframe: z.enum(["start", "end"]),
-      payment_date: z.string().min(8),
-    }).parse(d),
+  .inputValidator(
+    (d: {
+      scope: "tenant" | "platform";
+      amount: number;
+      timeframe: "start" | "end";
+      payment_date: string;
+    }) =>
+      z
+        .object({
+          scope: Scope,
+          amount: z.number().int().positive(),
+          timeframe: z.enum(["start", "end"]),
+          payment_date: z.string().min(8),
+        })
+        .parse(d),
   )
   .handler(async ({ data, context }) => {
     const recipientId = await resolveRecipientId(data.scope, context as never);
@@ -197,6 +247,132 @@ export const requestAnticipation = createServerFn({ method: "POST" })
         payment_date: data.payment_date,
       }),
     });
+  });
+
+export type TransactionsSummary = {
+  totalGrossCents: number;
+  totalFeeCents: number;
+  totalNetCents: number;
+  count: number;
+  periodStart: string;
+  periodEnd: string;
+};
+
+/**
+ * Tenant-only: extrato da igreja, calculado a partir de payments confirmados.
+ * Não consulta o Pagar.me — só agrega donation_amount/ticketto_fee já guardados
+ * no momento do split. Não expõe taxa por transação, somente o total do período.
+ */
+export const getRecipientTransactionsSummary = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { periodStart: string; periodEnd: string }) =>
+    z
+      .object({
+        periodStart: z.string().min(8),
+        periodEnd: z.string().min(8),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const ctx = context as unknown as {
+      supabase: ReturnType<typeof import("@supabase/supabase-js").createClient>;
+      userId: string;
+    };
+    const { data: profile } = await ctx.supabase
+      .from("profiles")
+      .select("tenant_id")
+      .eq("id", ctx.userId)
+      .maybeSingle();
+    const tenantId = (profile as { tenant_id?: string } | null)?.tenant_id;
+    if (!tenantId) throw new Error("Tenant não encontrado");
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: roleRow } = await supabaseAdmin
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", ctx.userId)
+      .eq("tenant_id", tenantId)
+      .in("role", ["manager", "admin"])
+      .limit(1)
+      .maybeSingle();
+    if (!roleRow) throw new Error("Acesso restrito a administradores da igreja.");
+
+    const { data: rows, error } = await supabaseAdmin
+      .from("payments")
+      .select("donation_amount, ticketto_fee")
+      .eq("tenant_id", tenantId)
+      .eq("status", "confirmed")
+      .is("deleted_at", null)
+      .gte("created_at", `${data.periodStart}T00:00:00.000Z`)
+      .lte("created_at", `${data.periodEnd}T23:59:59.999Z`);
+    if (error) throw new Error(error.message);
+
+    type Row = { donation_amount: number | null; ticketto_fee: number | null };
+    const list = (rows ?? []) as Row[];
+    const totals = list.reduce(
+      (acc, r) => {
+        acc.gross += r.donation_amount ?? 0;
+        acc.fee += r.ticketto_fee ?? 0;
+        return acc;
+      },
+      { gross: 0, fee: 0 },
+    );
+
+    return {
+      totalGrossCents: totals.gross,
+      totalFeeCents: totals.fee,
+      totalNetCents: totals.gross - totals.fee,
+      count: list.length,
+      periodStart: data.periodStart,
+      periodEnd: data.periodEnd,
+    } satisfies TransactionsSummary;
+  });
+
+export type PaymentListItem = {
+  id: string;
+  donation_amount: number | null;
+  method: string;
+  card_brand: string | null;
+  status: string;
+  created_at: string;
+};
+
+/** Tenant-only: lista de doações para a tabela de extrato (sem taxa por linha). */
+export const getRecipientPayments = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { periodStart: string; periodEnd: string; page?: number; size?: number }) =>
+    z
+      .object({
+        periodStart: z.string().min(8),
+        periodEnd: z.string().min(8),
+        page: z.number().int().min(1).default(1),
+        size: z.number().int().min(1).max(100).default(20),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const ctx = context as unknown as {
+      supabase: ReturnType<typeof import("@supabase/supabase-js").createClient>;
+      userId: string;
+    };
+    const { data: profile } = await ctx.supabase
+      .from("profiles")
+      .select("tenant_id")
+      .eq("id", ctx.userId)
+      .maybeSingle();
+    const tenantId = (profile as { tenant_id?: string } | null)?.tenant_id;
+    if (!tenantId) throw new Error("Tenant não encontrado");
+
+    const { data: rows, error } = await ctx.supabase
+      .from("payments_staff" as never)
+      .select("id, donation_amount, method, card_brand, status, created_at")
+      .eq("tenant_id", tenantId)
+      .gte("created_at", `${data.periodStart}T00:00:00.000Z`)
+      .lte("created_at", `${data.periodEnd}T23:59:59.999Z`)
+      .order("created_at", { ascending: false })
+      .range((data.page - 1) * data.size, data.page * data.size - 1);
+    if (error) throw new Error(error.message);
+    return { items: (rows ?? []) as PaymentListItem[] };
   });
 
 /** Platform-only: aggregate Ticketto fee revenue from paid payments. */
@@ -213,7 +389,9 @@ export const getPlatformFeeRevenue = createServerFn({ method: "POST" })
     if (!pr) throw new Error("Acesso restrito à plataforma");
     const { data, error } = await supabaseAdmin
       .from("payments")
-      .select("ticketto_fee, pagarme_fee, tk2_op_fee, transacao_fee, split_platform_amount, split_seller_amount, seller_recipient_id")
+      .select(
+        "ticketto_fee, pagarme_fee, tk2_op_fee, transacao_fee, split_platform_amount, split_seller_amount, seller_recipient_id",
+      )
       .in("status", ["paid", "confirmed"] as any)
       .is("deleted_at", null);
     if (error) throw new Error(error.message);
@@ -246,7 +424,17 @@ export const getPlatformFeeRevenue = createServerFn({ method: "POST" })
         totalSeller: 0,
       },
     );
-    const bySellerMap = new Map<string, { sellerRecipientId: string; tickettoRevenue: number; tk2OpRevenue: number; totalPlatform: number; totalSeller: number; count: number }>();
+    const bySellerMap = new Map<
+      string,
+      {
+        sellerRecipientId: string;
+        tickettoRevenue: number;
+        tk2OpRevenue: number;
+        totalPlatform: number;
+        totalSeller: number;
+        count: number;
+      }
+    >();
     for (const r of rows) {
       const k = r.seller_recipient_id ?? "—";
       const cur = bySellerMap.get(k) ?? {
