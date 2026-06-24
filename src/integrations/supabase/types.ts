@@ -674,6 +674,7 @@ export type Database = {
           ticketto_fee: number | null
           tk2_op_fee: number | null
           transacao_fee: number | null
+          updated_at: string
         }
         Insert: {
           amount: number
@@ -704,6 +705,7 @@ export type Database = {
           ticketto_fee?: number | null
           tk2_op_fee?: number | null
           transacao_fee?: number | null
+          updated_at?: string
         }
         Update: {
           amount?: number
@@ -734,6 +736,7 @@ export type Database = {
           ticketto_fee?: number | null
           tk2_op_fee?: number | null
           transacao_fee?: number | null
+          updated_at?: string
         }
         Relationships: [
           {
