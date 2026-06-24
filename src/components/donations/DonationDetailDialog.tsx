@@ -8,7 +8,7 @@ import { getDonationDetail } from "@/lib/donations.functions";
 import { CreditCard, QrCode, FileText } from "lucide-react";
 
 type Props = {
-  donationId: string | null;
+  paymentId: string | null;
   onClose: () => void;
 };
 
@@ -18,18 +18,18 @@ function methodIcon(method: string | null) {
   return CreditCard;
 }
 
-export function DonationDetailDialog({ donationId, onClose }: Props) {
+export function DonationDetailDialog({ paymentId, onClose }: Props) {
   const detailFn = useServerFn(getDonationDetail);
   const { data, isLoading, error } = useQuery({
-    queryKey: ["donation-detail", donationId],
-    queryFn: () => detailFn({ data: { donationId: donationId as string } }),
-    enabled: !!donationId,
+    queryKey: ["donation-detail", paymentId],
+    queryFn: () => detailFn({ data: { paymentId: paymentId as string } }),
+    enabled: !!paymentId,
   });
 
   const Icon = methodIcon(data?.paymentMethod ?? null);
 
   return (
-    <Dialog open={!!donationId} onOpenChange={(open) => !open && onClose()}>
+    <Dialog open={!!paymentId} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle className="font-display">Detalhes da doação</DialogTitle>
@@ -55,7 +55,11 @@ export function DonationDetailDialog({ donationId, onClose }: Props) {
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="text-xs uppercase tracking-wider text-muted-foreground">
-                      {data.isPlatformAdmin ? "Valor bruto" : "Valor recebido"}
+                      {!data.donationId
+                        ? "Valor da tentativa"
+                        : data.isPlatformAdmin
+                          ? "Valor bruto"
+                          : "Valor recebido"}
                     </p>
                     <p className="font-display mt-1 text-3xl leading-none">
                       {brl(data.isPlatformAdmin ? data.grossAmountCents : data.netAmountCents)}
@@ -68,7 +72,13 @@ export function DonationDetailDialog({ donationId, onClose }: Props) {
                   <StatusBadge status={data.status} />
                 </div>
 
-                {data.isPlatformAdmin && (
+                {data.errorMessage && (
+                  <p className="mt-3 rounded-md bg-destructive/10 px-3 py-2 text-xs text-destructive">
+                    {data.errorMessage}
+                  </p>
+                )}
+
+                {data.isPlatformAdmin && data.donationId && (
                   <div className="mt-4 flex gap-6 border-t pt-4">
                     <div>
                       <p className="text-[11px] text-muted-foreground">Taxa administrativa</p>

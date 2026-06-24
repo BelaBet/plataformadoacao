@@ -162,7 +162,7 @@ export function DonationsTable() {
         </Card>
       )}
 
-      <DonationDetailDialog donationId={selectedId} onClose={() => setSelectedId(null)} />
+      <DonationDetailDialog paymentId={selectedId} onClose={() => setSelectedId(null)} />
     </div>
   );
 }

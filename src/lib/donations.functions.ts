@@ -3,12 +3,19 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 /**
- * Tela "Doações": lista resumida + detalhe por doação.
+ * Tela "Doações": lista resumida + detalhe por doação/tentativa de pagamento.
+ *
+ * Fonte primária: payments (reference_type='donation'), não donations.
+ * donations só é criada quando o pagamento NÃO falha (ver payments.functions.ts,
+ * persistPayment: `if (args.status !== "failed")`), então tentativas falhadas
+ * só existem em payments, sem doador associado. Para listar "todas as
+ * tentativas, inclusive falhas", a lista parte de payments e busca o doador
+ * (via donations.payment_id) quando existir.
  *
  * Regras de acesso:
- * - Staff de tenant (manager/admin): só vê doações do próprio tenant_id,
+ * - Staff de tenant (manager/admin): só vê pagamentos do próprio tenant_id,
  *   valor mostrado é líquido (sem taxa visível).
- * - Super admin (platform_roles): vê doações de todos os tenants, com
+ * - Super admin (platform_roles): vê pagamentos de todos os tenants, com
  *   filtro opcional por tenant, valor bruto + taxa administrativa visíveis.
  *
  * Endereço de cobrança (cartão/boleto) não tem coluna própria — é extraído
@@ -55,7 +62,8 @@ async function resolveAccess(ctx: Ctx) {
 }
 
 export type DonationListItem = {
-  id: string;
+  id: string; // payment id (fonte primária agora é payments, não donations)
+  donationId: string | null; // null quando o pagamento falhou antes de criar a doação
   donorName: string | null;
   tenantId: string;
   tenantName: string | null;
@@ -92,10 +100,11 @@ export const getDonationsList = createServerFn({ method: "POST" })
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     let query = supabaseAdmin
-      .from("donations_staff" as never)
+      .from("payments")
       .select(
-        "id, tenant_id, donor_name, payment_method, card_brand, gross_amount, net_amount, created_at, payment_id",
+        "id, tenant_id, method, card_brand, donation_amount, status, created_at, reference_id",
       )
+      .eq("reference_type", "donation")
       .gte("created_at", `${data.periodStart}T00:00:00.000Z`)
       .lte("created_at", `${data.periodEnd}T23:59:59.999Z`)
       .order("created_at", { ascending: false })
@@ -107,37 +116,46 @@ export const getDonationsList = createServerFn({ method: "POST" })
       query = query.eq("tenant_id", data.tenantId);
     }
 
-    type Row = {
+    type PaymentRow = {
       id: string;
       tenant_id: string;
-      donor_name: string | null;
-      payment_method: string | null;
+      method: string | null;
       card_brand: string | null;
-      gross_amount: number | null;
-      net_amount: number | null;
+      donation_amount: number | null;
+      status: string;
       created_at: string;
-      payment_id: string | null;
+      reference_id: string | null; // = donations.id quando a doação foi criada
     };
     const { data: rows, error } = await query;
     if (error) throw new Error(error.message);
-    const list = (rows ?? []) as Row[];
+    const payments = (rows ?? []) as PaymentRow[];
 
-    // status vem de payments.status (1 query agregada, evita N+1)
-    const paymentIds = [...new Set(list.map((r) => r.payment_id).filter(Boolean))] as string[];
-    const statusByPaymentId = new Map<string, string>();
-    if (paymentIds.length > 0) {
-      const { data: pays } = await supabaseAdmin
-        .from("payments")
-        .select("id, status")
-        .in("id", paymentIds);
-      for (const p of (pays ?? []) as { id: string; status: string }[])
-        statusByPaymentId.set(p.id, p.status);
+    // doador + bruto/admin_fee vêm de donations (só existe quando o pagamento não falhou)
+    const donationIds = [
+      ...new Set(payments.map((p) => p.reference_id).filter(Boolean)),
+    ] as string[];
+    const donationById = new Map<
+      string,
+      { donor_name: string | null; gross_amount: number | null; net_amount: number | null }
+    >();
+    if (donationIds.length > 0) {
+      const { data: dons } = await supabaseAdmin
+        .from("donations_staff" as never)
+        .select("id, donor_name, gross_amount, net_amount")
+        .in("id", donationIds);
+      for (const d of (dons ?? []) as {
+        id: string;
+        donor_name: string | null;
+        gross_amount: number | null;
+        net_amount: number | null;
+      }[])
+        donationById.set(d.id, d);
     }
 
     // nome do tenant só é necessário para super admin (a igreja já sabe quem é)
     const tenantNameById = new Map<string, string>();
     if (access.isPlatformAdmin) {
-      const tenantIds = [...new Set(list.map((r) => r.tenant_id))];
+      const tenantIds = [...new Set(payments.map((p) => p.tenant_id))];
       if (tenantIds.length > 0) {
         const { data: tenants } = await supabaseAdmin
           .from("tenants")
@@ -148,17 +166,26 @@ export const getDonationsList = createServerFn({ method: "POST" })
       }
     }
 
-    const items: DonationListItem[] = list.map((r) => ({
-      id: r.id,
-      donorName: r.donor_name,
-      tenantId: r.tenant_id,
-      tenantName: access.isPlatformAdmin ? (tenantNameById.get(r.tenant_id) ?? null) : null,
-      paymentMethod: r.payment_method,
-      cardBrand: r.card_brand,
-      amountCents: access.isPlatformAdmin ? (r.gross_amount ?? 0) : (r.net_amount ?? 0),
-      status: r.payment_id ? (statusByPaymentId.get(r.payment_id) ?? null) : null,
-      createdAt: r.created_at,
-    }));
+    const items: DonationListItem[] = payments.map((p) => {
+      const donation = p.reference_id ? donationById.get(p.reference_id) : undefined;
+      // fallback para payments.donation_amount (líquido) quando não há donation vinculada
+      // (pagamento falhou antes de gravar gross_amount em donations)
+      const fallbackNet = p.donation_amount ?? 0;
+      return {
+        id: p.id,
+        donationId: p.reference_id,
+        donorName: donation?.donor_name ?? null,
+        tenantId: p.tenant_id,
+        tenantName: access.isPlatformAdmin ? (tenantNameById.get(p.tenant_id) ?? null) : null,
+        paymentMethod: p.method,
+        cardBrand: p.card_brand,
+        amountCents: access.isPlatformAdmin
+          ? (donation?.gross_amount ?? fallbackNet)
+          : (donation?.net_amount ?? fallbackNet),
+        status: p.status,
+        createdAt: p.created_at,
+      };
+    });
 
     return { items, isPlatformAdmin: access.isPlatformAdmin };
   });
@@ -186,7 +213,8 @@ function extractBillingAddress(gatewayRequest: unknown): BillingAddress {
 }
 
 export type DonationDetail = {
-  id: string;
+  id: string; // payment id
+  donationId: string | null;
   donorName: string | null;
   donorEmail: string | null;
   donorPhone: string | null;
@@ -198,6 +226,7 @@ export type DonationDetail = {
   netAmountCents: number | null;
   adminFeeCents: number | null;
   status: string | null;
+  errorMessage: string | null;
   gatewayId: string | null;
   createdAt: string;
   updatedAt: string | null;
@@ -207,59 +236,71 @@ export type DonationDetail = {
 
 export const getDonationDetail = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { donationId: string }) =>
-    z.object({ donationId: z.string().uuid() }).parse(d),
-  )
+  .inputValidator((d: { paymentId: string }) => z.object({ paymentId: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const ctx = context as unknown as Ctx;
     const access = await resolveAccess(ctx);
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     let query = supabaseAdmin
-      .from("donations_staff" as never)
+      .from("payments")
       .select(
-        "id, tenant_id, donor_name, donor_email, donor_phone, payment_method, card_brand, gross_amount, admin_fee, net_amount, gateway_id, created_at, payment_id",
+        "id, tenant_id, method, card_brand, donation_amount, status, error_message, gateway_id, created_at, updated_at, gateway_request, reference_id, reference_type",
       )
-      .eq("id", data.donationId);
+      .eq("id", data.paymentId)
+      .eq("reference_type", "donation");
     if (!access.isPlatformAdmin) query = query.eq("tenant_id", access.tenantId as string);
 
     type Row = {
       id: string;
       tenant_id: string;
-      donor_name: string | null;
-      donor_email: string | null;
-      donor_phone: string | null;
-      payment_method: string | null;
+      method: string | null;
       card_brand: string | null;
-      gross_amount: number | null;
-      admin_fee: number | null;
-      net_amount: number | null;
+      donation_amount: number | null;
+      status: string;
+      error_message: string | null;
       gateway_id: string | null;
       created_at: string;
-      payment_id: string | null;
+      updated_at: string | null;
+      gateway_request: unknown;
+      reference_id: string | null;
     };
     const { data: row, error } = await query.maybeSingle();
     if (error) throw new Error(error.message);
     if (!row) throw new Error("Doação não encontrada.");
     const r = row as Row;
 
-    let status: string | null = null;
-    let updatedAt: string | null = null;
-    let billingAddress: BillingAddress = null;
-    if (r.payment_id) {
-      const { data: payment } = await supabaseAdmin
-        .from("payments")
-        .select("status, updated_at, gateway_request")
-        .eq("id", r.payment_id)
+    let donorName: string | null = null;
+    let donorEmail: string | null = null;
+    let donorPhone: string | null = null;
+    let grossAmountCents: number | null = null;
+    let netAmountCents: number | null = r.donation_amount; // fallback quando não há donation
+    let adminFeeCents: number | null = null;
+    if (r.reference_id) {
+      const { data: donation } = await supabaseAdmin
+        .from("donations_staff" as never)
+        .select("donor_name, donor_email, donor_phone, gross_amount, net_amount, admin_fee")
+        .eq("id", r.reference_id)
         .maybeSingle();
-      if (payment) {
-        status = (payment as { status: string }).status;
-        updatedAt = (payment as { updated_at: string | null }).updated_at;
-        billingAddress = extractBillingAddress(
-          (payment as { gateway_request: unknown }).gateway_request,
-        );
+      if (donation) {
+        const d = donation as {
+          donor_name: string | null;
+          donor_email: string | null;
+          donor_phone: string | null;
+          gross_amount: number | null;
+          net_amount: number | null;
+          admin_fee: number | null;
+        };
+        donorName = d.donor_name;
+        donorEmail = d.donor_email;
+        donorPhone = d.donor_phone;
+        grossAmountCents = d.gross_amount;
+        netAmountCents = d.net_amount ?? netAmountCents;
+        adminFeeCents = d.admin_fee;
       }
     }
+
+    const billingAddress = extractBillingAddress(r.gateway_request);
 
     let tenantName: string | null = null;
     if (access.isPlatformAdmin) {
@@ -273,20 +314,22 @@ export const getDonationDetail = createServerFn({ method: "POST" })
 
     const detail: DonationDetail = {
       id: r.id,
-      donorName: r.donor_name,
-      donorEmail: r.donor_email,
-      donorPhone: r.donor_phone,
+      donationId: r.reference_id,
+      donorName,
+      donorEmail,
+      donorPhone,
       tenantId: r.tenant_id,
       tenantName,
-      paymentMethod: r.payment_method,
+      paymentMethod: r.method,
       cardBrand: r.card_brand,
-      grossAmountCents: access.isPlatformAdmin ? r.gross_amount : null,
-      netAmountCents: r.net_amount,
-      adminFeeCents: access.isPlatformAdmin ? r.admin_fee : null,
-      status,
+      grossAmountCents: access.isPlatformAdmin ? grossAmountCents : null,
+      netAmountCents,
+      adminFeeCents: access.isPlatformAdmin ? adminFeeCents : null,
+      status: r.status,
+      errorMessage: access.isPlatformAdmin ? r.error_message : null,
       gatewayId: r.gateway_id,
       createdAt: r.created_at,
-      updatedAt,
+      updatedAt: r.updated_at,
       billingAddress,
       isPlatformAdmin: access.isPlatformAdmin,
     };
