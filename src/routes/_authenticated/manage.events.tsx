@@ -1,8 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
+import { uploadEventBanner } from "@/lib/events.functions";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,7 +12,12 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import { Calendar, ExternalLink, Plus } from "lucide-react";
 import { toast } from "sonner";
@@ -49,6 +56,37 @@ function ManageEventsPage() {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<FormData>(empty);
   const [uploading, setUploading] = useState(false);
+  const uploadBannerFn = useServerFn(uploadEventBanner);
+
+  async function handleBannerUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!/^image\/(png|jpe?g|webp)$/.test(file.type)) {
+      toast.error("Envie uma imagem PNG, JPG ou WEBP.");
+      return;
+    }
+    if (file.size > 6 * 1024 * 1024) {
+      toast.error("A imagem deve ter até 6MB.");
+      return;
+    }
+    setUploading(true);
+    try {
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve((reader.result as string).split(",")[1]);
+        reader.onerror = () => reject(new Error("Não foi possível ler o arquivo."));
+        reader.readAsDataURL(file);
+      });
+      const result = await uploadBannerFn({
+        data: { base64, contentType: file.type, filename: file.name },
+      });
+      setForm((f) => ({ ...f, banner_url: result.url }));
+    } catch (err) {
+      toast.error(translateError(err));
+    } finally {
+      setUploading(false);
+    }
+  }
   const { data: events, isLoading } = useQuery({
     queryKey: ["manage-events", tenantId],
     enabled: !!tenantId,
@@ -103,77 +141,96 @@ function ManageEventsPage() {
         <div>
           <h1 className="font-display text-3xl md:text-4xl">Eventos</h1>
           <p className="mt-1 text-muted-foreground">
-            Cadastre eventos da igreja. A inscrição é feita no link externo
-            (TicketTO, Sympla, Eventbrite, Hotmart ou site próprio).
+            Cadastre eventos da igreja. A inscrição é feita no link externo (TicketTO, Sympla,
+            Eventbrite, Hotmart ou site próprio).
           </p>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button><Plus className="mr-2 h-4 w-4" /> Novo evento</Button>
+            <Button>
+              <Plus className="mr-2 h-4 w-4" /> Novo evento
+            </Button>
           </DialogTrigger>
           <DialogContent className="max-w-lg">
-            <DialogHeader><DialogTitle>Novo evento</DialogTitle></DialogHeader>
+            <DialogHeader>
+              <DialogTitle>Novo evento</DialogTitle>
+            </DialogHeader>
             <form onSubmit={onSubmit} className="space-y-4">
               <div>
                 <Label htmlFor="title">Título *</Label>
-                <Input id="title" value={form.title}
+                <Input
+                  id="title"
+                  value={form.title}
                   onChange={(e) => setForm({ ...form, title: e.target.value })}
-                  required maxLength={140} />
+                  required
+                  maxLength={140}
+                />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <Label htmlFor="date">Data e hora</Label>
-                  <Input id="date" type="datetime-local" value={form.date}
-                    onChange={(e) => setForm({ ...form, date: e.target.value })} />
+                  <Input
+                    id="date"
+                    type="datetime-local"
+                    value={form.date}
+                    onChange={(e) => setForm({ ...form, date: e.target.value })}
+                  />
                 </div>
                 <div>
                   <Label htmlFor="location">Local</Label>
-                  <Input id="location" value={form.location}
-                    onChange={(e) => setForm({ ...form, location: e.target.value })} />
+                  <Input
+                    id="location"
+                    value={form.location}
+                    onChange={(e) => setForm({ ...form, location: e.target.value })}
+                  />
                 </div>
               </div>
               <div>
                 <Label htmlFor="description">Descrição</Label>
-                <Textarea id="description" rows={3} value={form.description}
-                  onChange={(e) => setForm({ ...form, description: e.target.value })} />
+                <Textarea
+                  id="description"
+                  rows={3}
+                  value={form.description}
+                  onChange={(e) => setForm({ ...form, description: e.target.value })}
+                />
               </div>
               <div>
                 <div>
-  <Label>Banner do Evento</Label>
+                  <Label>Banner do Evento</Label>
 
-  <Input
-    type="file"
-    accept="image/*"
-    onChange={handleBannerUpload}
-    disabled={uploading}
-  />
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleBannerUpload}
+                    disabled={uploading}
+                  />
 
-  {uploading && (
-    <p className="mt-2 text-sm text-muted-foreground">
-      Enviando imagem...
-    </p>
-  )}
+                  {uploading && (
+                    <p className="mt-2 text-sm text-muted-foreground">Enviando imagem...</p>
+                  )}
 
-  {form.banner_url && (
-    <img
-      src={form.banner_url}
-      alt="Banner"
-      className="mt-3 h-48 w-full rounded-lg border object-cover"
-    />
-  )}
-</div>"
-                  value={form.banner_url}
-                  onChange={(e) => setForm({ ...form, banner_url: e.target.value })} />
+                  {form.banner_url && (
+                    <img
+                      src={form.banner_url}
+                      alt="Banner"
+                      className="mt-3 h-48 w-full rounded-lg border object-cover"
+                    />
+                  )}
+                </div>
               </div>
               <div>
                 <Label htmlFor="external_url">URL do evento *</Label>
-                <Input id="external_url" type="url" required
+                <Input
+                  id="external_url"
+                  type="url"
+                  required
                   placeholder="https://www.ticketto.com.br/evento/…"
                   value={form.external_url}
-                  onChange={(e) => setForm({ ...form, external_url: e.target.value })} />
+                  onChange={(e) => setForm({ ...form, external_url: e.target.value })}
+                />
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Padrão: TicketTO. Também aceitamos Sympla, Eventbrite, Hotmart
-                  ou site próprio da igreja.
+                  Padrão: TicketTO. Também aceitamos Sympla, Eventbrite, Hotmart ou site próprio da
+                  igreja.
                 </p>
               </div>
               <DialogFooter>
@@ -195,16 +252,13 @@ function ManageEventsPage() {
         ) : (events?.length ?? 0) === 0 ? (
           <Card className="col-span-full p-10 text-center">
             <Calendar className="mx-auto h-8 w-8 text-muted-foreground" />
-            <p className="mt-3 text-sm text-muted-foreground">
-              Nenhum evento cadastrado.
-            </p>
+            <p className="mt-3 text-sm text-muted-foreground">Nenhum evento cadastrado.</p>
           </Card>
         ) : (
           events!.map((ev) => (
             <Card key={ev.id} className="overflow-hidden">
               {ev.banner_url && (
-                <img src={ev.banner_url} alt={ev.title}
-                  className="h-40 w-full object-cover" />
+                <img src={ev.banner_url} alt={ev.title} className="h-40 w-full object-cover" />
               )}
               <div className="p-5">
                 <div className="flex items-center justify-between gap-2">
@@ -218,9 +272,7 @@ function ManageEventsPage() {
                     {new Date(ev.date).toLocaleString("pt-BR")}
                   </p>
                 )}
-                {ev.location && (
-                  <p className="text-xs text-muted-foreground">{ev.location}</p>
-                )}
+                {ev.location && <p className="text-xs text-muted-foreground">{ev.location}</p>}
                 {ev.description && (
                   <p className="mt-2 line-clamp-3 text-sm text-muted-foreground">
                     {ev.description}
