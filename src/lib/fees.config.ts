@@ -9,7 +9,7 @@ export const FEES = {
   pix: {
     adquirencia_fixa: 40,       // R$0,40 — custo Pagar.me fixo
     tk2_operacional_fixo: 25,   // R$0,25 — custo adquirência separado
-    adm_percent: 0.035,         // 3,5%
+    adm_percent: 0.0352,        // 3,52%
     transacao_fixa: 28,         // R$0,28
   },
 
