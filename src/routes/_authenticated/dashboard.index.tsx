@@ -43,7 +43,7 @@ function Dashboard() {
     <div>
       <h1 className="font-display text-3xl md:text-4xl">{greeting}</h1>
       <p className="mt-1 text-muted-foreground">
-        {isStaff ? "Visão geral da sua comunidade." : "Acompanhe sua jornada na comunidade."}
+        {isStaff ? "Visão geral da sua igreja." : "Acompanhe sua jornada na igreja."}
       </p>
 
       <DonationsSummary />
