@@ -261,7 +261,6 @@ export const getDonationDetail = createServerFn({ method: "POST" })
       error_message: string | null;
       gateway_id: string | null;
       created_at: string;
-      updated_at: string | null;
       gateway_request: unknown;
       reference_id: string | null;
     };
