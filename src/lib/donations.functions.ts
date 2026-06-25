@@ -245,7 +245,7 @@ export const getDonationDetail = createServerFn({ method: "POST" })
     let query = supabaseAdmin
       .from("payments")
       .select(
-        "id, tenant_id, method, card_brand, donation_amount, status, error_message, gateway_id, created_at, updated_at, gateway_request, reference_id, reference_type",
+        "id, tenant_id, method, card_brand, donation_amount, status, error_message, gateway_id, created_at, gateway_request, reference_id, reference_type",
       )
       .eq("id", data.paymentId)
       .eq("reference_type", "donation");
