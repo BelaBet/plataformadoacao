@@ -60,7 +60,7 @@ function LoginPage() {
     <div className="flex min-h-screen items-center justify-center px-4">
       <div className="w-full max-w-sm">
         <Link to="/" className="mb-8 block text-sm text-muted-foreground hover:underline">← Voltar</Link>
-        <h1 className="font-display text-3xl">Bem-Vindo a Ticketpay</h1>
+        <h1 className="font-display text-3xl">Bem-Vindo a Ticketconnect</h1>
         <p className="mt-1 text-sm text-muted-foreground">Acesse sua conta.</p>
         {emailConfirmed && (
           <div className="mt-4 rounded-lg border border-primary/20 bg-primary/10 p-3 text-sm text-primary">
