@@ -948,7 +948,7 @@ function PixDialog({
   const brCode = buildPixPayload({
     key,
     amount: amount ? amount.replace(/[^\d,.-]/g, "") : undefined,
-    merchantName: "TK2 EMPREENDIMENTOS",
+    merchantName: "TicketConnect",
     merchantCity: "SAO PAULO",
   });
   const copy = async () => {
