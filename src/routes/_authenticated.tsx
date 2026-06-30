@@ -130,9 +130,13 @@ function AuthLayout() {
         <Outlet />
       </main>
 
-      {/* Powered by TK2 — discreet platform attribution */}
+      {/* Powered by TicketConnect — discreet platform attribution */}
       <footer className="hidden border-t bg-card/40 py-3 text-center text-xs text-muted-foreground md:block">
-        Powered by <span className="font-medium">TK2 EMPREENDIMENTOS</span>
+        <img
+          src="/__l5e/assets-v1/64e1ae41-9cf7-45e3-ac17-3658b088a3df/ticketconnect-logo-long.jpeg"
+          alt="TicketConnect"
+          className="mx-auto h-5 w-auto opacity-70"
+        />
       </footer>
 
       {/* Mobile bottom nav */}
