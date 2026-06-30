@@ -20,9 +20,11 @@ function DashboardLayout() {
             <div className="flex items-center gap-2">
               <SidebarTrigger />
               {isPlatformAdmin && (
-                <span className="text-xs font-medium uppercase tracking-wider text-amber-600">
-                  Plataforma
-                </span>
+                <img
+                  src="/__l5e/assets-v1/64e1ae41-9cf7-45e3-ac17-3658b088a3df/ticketconnect-logo-long.jpeg"
+                  alt="TicketConnect"
+                  className="h-5 w-auto"
+                />
               )}
             </div>
             {isPlatformAdmin && <TenantSwitcher />}
