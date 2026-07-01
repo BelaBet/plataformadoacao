@@ -21,7 +21,7 @@ export const Route = createFileRoute("/_authenticated")({
 });
 
 function AuthLayout() {
-  const { user, loading, signOut, profile, isStaff, isAdmin } = useAuth();
+  const { user, loading, signOut, profile, isStaff, isAdmin, isPlatformAdmin } = useAuth();
   const { tenant: urlTenant } = useTenant();
   const router = useRouter();
   const location = useLocation();
