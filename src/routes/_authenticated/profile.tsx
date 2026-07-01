@@ -161,7 +161,7 @@ function ProfilePage() {
 
           <InfoRow label="Status" value={profile?.status} />
           <InfoRow label="Consentimento LGPD" value={profile?.lgpd_consent ? "Aceito" : "Pendente"} />
-          <InfoRow label="Membro desde" value={createdAt} />
+          <InfoRow label="Instituição desde" value={createdAt} />
         </div>
       </div>
 
