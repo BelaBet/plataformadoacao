@@ -88,29 +88,42 @@ function AuthLayout() {
     <div className="flex min-h-screen flex-col pb-20 md:pb-0">
       <header className="border-b bg-card/80 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-3">
-          <Link to="/dashboard" className="flex items-center gap-3 min-w-0">
-            {logoUrl ? (
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white overflow-hidden p-1 border">
-                <img
-                  src={logoUrl}
-                  alt={name}
-                  style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }}
-                />
-              </div>
-            ) : (
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground font-display text-sm">
-                {initials(name)}
-              </div>
+          <div className="flex items-center gap-2 min-w-0">
+            {location.pathname !== "/dashboard" && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="shrink-0"
+                onClick={() => router.history.back()}
+                aria-label="Voltar"
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
             )}
-            <div className="flex flex-col min-w-0 leading-tight">
-              <span className="font-display text-base truncate">{name}</span>
-              {tagline && (
-                <span className="text-xs text-muted-foreground truncate hidden sm:inline">
-                  {tagline}
-                </span>
+            <Link to="/dashboard" className="flex items-center gap-3 min-w-0">
+              {logoUrl ? (
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white overflow-hidden p-1 border">
+                  <img
+                    src={logoUrl}
+                    alt={name}
+                    style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }}
+                  />
+                </div>
+              ) : (
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground font-display text-sm">
+                  {initials(name)}
+                </div>
               )}
-            </div>
-          </Link>
+              <div className="flex flex-col min-w-0 leading-tight">
+                <span className="font-display text-base truncate">{name}</span>
+                {tagline && (
+                  <span className="text-xs text-muted-foreground truncate hidden sm:inline">
+                    {tagline}
+                  </span>
+                )}
+              </div>
+            </Link>
+          </div>
           <nav className="hidden items-center gap-1 md:flex">
             <Button asChild variant="ghost" size="sm"><Link to="/dashboard">Painel</Link></Button>
             {isStaff && (myTenant as { slug?: string } | null)?.slug && (
@@ -123,11 +136,40 @@ function AuthLayout() {
             <Button asChild variant="ghost" size="sm"><Link to="/messages">Mensagens</Link></Button>
             <Button asChild variant="ghost" size="sm"><Link to="/notifications"><Bell className="h-4 w-4" /></Link></Button>
             {isStaff && <Button asChild variant="default" size="sm"><Link to="/manage/dashboard">Gestão</Link></Button>}
+            {isPlatformAdmin && <Button asChild variant="default" size="sm"><Link to="/admin/dashboard"><ShieldAlert className="h-4 w-4 mr-1" /> Plataforma</Link></Button>}
             <Button asChild variant="ghost" size="sm"><Link to="/profile">Perfil</Link></Button>
             <Button onClick={signOut} variant="ghost" size="sm">
               <LogOut className="h-4 w-4" /> Sair
             </Button>
           </nav>
+          <div className="flex items-center gap-2 md:hidden">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" aria-label="Menu">
+                  <Menu className="h-5 w-5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel>{profile?.full_name ?? user.email}</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild><Link to="/dashboard"><LayoutDashboard className="h-4 w-4 mr-2" />Painel</Link></DropdownMenuItem>
+                <DropdownMenuItem asChild><Link to="/messages"><Megaphone className="h-4 w-4 mr-2" />Mensagens</Link></DropdownMenuItem>
+                <DropdownMenuItem asChild><Link to="/notifications"><Bell className="h-4 w-4 mr-2" />Avisos</Link></DropdownMenuItem>
+                <DropdownMenuItem asChild><Link to="/profile"><User className="h-4 w-4 mr-2" />Perfil</Link></DropdownMenuItem>
+                {isStaff && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild><Link to="/manage/dashboard"><LayoutDashboard className="h-4 w-4 mr-2" />Gestão</Link></DropdownMenuItem>
+                  </>
+                )}
+                {isPlatformAdmin && (
+                  <DropdownMenuItem asChild><Link to="/admin/dashboard"><ShieldAlert className="h-4 w-4 mr-2" />Plataforma</Link></DropdownMenuItem>
+                )}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={signOut}><LogOut className="h-4 w-4 mr-2" />Sair</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
           <span className="hidden text-xs text-muted-foreground md:inline">
             {profile?.full_name ?? user.email}
           </span>
