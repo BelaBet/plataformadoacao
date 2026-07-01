@@ -93,7 +93,7 @@ function ProfilePage() {
     if (!confirm("Tem certeza? Seus dados pessoais serão anonimizados e não poderão ser restaurados.")) return;
     const { error } = await supabase
       .from("profiles")
-      .update({ full_name: "Membro anônimo", phone: null, email: null, avatar_url: null })
+      .update({ full_name: "Instituição anônima", phone: null, email: null, avatar_url: null })
       .eq("id", user!.id);
     if (error) return toast.error(translateError(error));
     toast.success("Dados anonimizados.");
