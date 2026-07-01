@@ -65,16 +65,7 @@ export function AppSidebar() {
     <Sidebar collapsible="icon">
       <SidebarHeader className="border-b">
         <div className="flex items-center gap-2 px-2 py-1">
-          {isStaff ? (
-            <>
-              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-primary-foreground text-[10px] font-medium">
-                {initials(tenant?.name ?? "Gestão")}
-              </div>
-              {!collapsed && (
-                <span className="font-display text-sm">{tenant?.name ?? "Gestão"}</span>
-              )}
-            </>
-          ) : (
+          {isPlatformAdmin ? (
             <>
               <img
                 src="/__l5e/assets-v1/64e1ae41-9cf7-45e3-ac17-3658b088a3df/ticketconnect-logo-long.jpeg"
@@ -90,7 +81,16 @@ export function AppSidebar() {
                 </div>
               )}
             </>
-          )}
+          ) : isStaff ? (
+            <>
+              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-primary-foreground text-[10px] font-medium">
+                {initials(tenant?.name ?? "Gestão")}
+              </div>
+              {!collapsed && (
+                <span className="font-display text-sm">{tenant?.name ?? "Gestão"}</span>
+              )}
+            </>
+          ) : null}
         </div>
       </SidebarHeader>
       <SidebarContent>

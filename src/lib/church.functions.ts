@@ -58,7 +58,7 @@ export const updateChurchIdentity = createServerFn({ method: "POST" })
       .from("user_roles")
       .upsert(
         { user_id: userId, tenant_id: tenantId, role: "admin" },
-        { onConflict: "user_id,tenant_id,role" },
+        { onConflict: "user_id,tenant_id" },
       );
 
     return { tenantId, logoUrl };

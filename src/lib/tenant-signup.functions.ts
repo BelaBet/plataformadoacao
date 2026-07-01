@@ -414,7 +414,7 @@ export const provisionTenant = createServerFn({ method: "POST" })
           .from("user_roles")
           .upsert(
             { user_id: invited.user.id, tenant_id: tenantId, role: "admin" as any },
-            { onConflict: "user_id,tenant_id,role" },
+            { onConflict: "user_id,tenant_id" },
           );
       }
     }
