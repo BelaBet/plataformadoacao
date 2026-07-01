@@ -80,7 +80,7 @@ function TK2LandingPage() {
               .
             </h1>
             <p className="mt-5 max-w-xl text-lg text-slate-600">
-              Receba dízimos e ofertas por PIX, cartão e boleto. Gerencie membros, eventos e financeiro em um único
+              Receba dízimos e ofertas por PIX, cartão e boleto. Gerencie instituições, eventos e financeiro em um único
               lugar — com a sua marca, no seu domínio.
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-3">
@@ -166,7 +166,7 @@ function TK2LandingPage() {
             {[
               { t: "Doações online", d: "PIX, cartão e boleto com split automático e taxas transparentes." },
               { t: "Gestão financeira", d: "Centros de custo, conciliação, antecipação e transferências." },
-              { t: "Membros e comunidade", d: "Cadastro, comunicação, segmentação e histórico." },
+              { t: "Instituições e comunidade", d: "Cadastro, comunicação, segmentação e histórico." },
               { t: "Eventos com TicketTO", d: "Divulgue e venda ingressos integrado à TicketTO." },
               { t: "Sua marca, sua página", d: "Página pública personalizada com logo, cores e domínio próprio." },
               { t: "QR Code de doação", d: "Imprima, projete na tela e receba contribuições em segundos." },

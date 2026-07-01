@@ -155,7 +155,7 @@ function SuperAdminMembersPage() {
               <TableRow>
                 <TableHead>Instituição</TableHead>
                 <TableHead>Slug</TableHead>
-                <TableHead>Membros</TableHead>
+                <TableHead>Instituições</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Criada em</TableHead>
                 <TableHead className="w-8"></TableHead>
@@ -189,7 +189,7 @@ function SuperAdminMembersPage() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem onClick={() => setSelectedTenant(t)}>
-                          <Eye className="h-4 w-4" /> Ver membros
+                          <Eye className="h-4 w-4" /> Ver instituições
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => setEditTenant(t)}>
                           <Pencil className="h-4 w-4" /> Editar
@@ -376,7 +376,7 @@ function TenantMembersView({ tenant, onBack }: { tenant: Tenant; onBack: () => v
     await supabase.from("user_roles").delete().eq("user_id", deleteMember.id).eq("tenant_id", tenant.id);
     const { error } = await supabase.from("profiles").delete().eq("id", deleteMember.id);
     if (error) return toast.error(translateError(error));
-    toast.success("Membro removido");
+    toast.success("Instituição removida");
     setDeleteMember(null);
     load();
   };
@@ -391,7 +391,7 @@ function TenantMembersView({ tenant, onBack }: { tenant: Tenant; onBack: () => v
           <h1 className="font-display text-2xl flex items-center gap-2">
             <Building2 className="h-6 w-6" /> {tenant.name}
           </h1>
-          <p className="text-sm text-muted-foreground">Membros desta instituição</p>
+          <p className="text-sm text-muted-foreground">Instituições desta instituição</p>
         </div>
       </div>
 
@@ -415,7 +415,7 @@ function TenantMembersView({ tenant, onBack }: { tenant: Tenant; onBack: () => v
               <SelectItem value="blocked">Bloqueado</SelectItem>
             </SelectContent>
           </Select>
-          <Badge variant="outline">{members.length} membros</Badge>
+          <Badge variant="outline">{members.length} instituições</Badge>
         </div>
 
         <div className="overflow-x-auto">
@@ -435,7 +435,7 @@ function TenantMembersView({ tenant, onBack }: { tenant: Tenant; onBack: () => v
               {loading ? (
                 <LoadingRow colSpan={7} />
               ) : filtered.length === 0 ? (
-                <EmptyRow colSpan={7} message="Nenhum membro encontrado." />
+                <EmptyRow colSpan={7} message="Nenhuma instituição encontrada." />
               ) : filtered.map((m) => (
                 <TableRow key={m.id}>
                   <TableCell className="font-medium">{m.full_name ?? "—"}</TableCell>
@@ -448,7 +448,7 @@ function TenantMembersView({ tenant, onBack }: { tenant: Tenant; onBack: () => v
                     >
                       <SelectTrigger className="h-8 w-[130px]"><SelectValue /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="member">Membro</SelectItem>
+                        <SelectItem value="member">Instituição</SelectItem>
                         <SelectItem value="manager">Gestor</SelectItem>
                         <SelectItem value="admin">Admin</SelectItem>
                       </SelectContent>
@@ -497,7 +497,7 @@ function TenantMembersView({ tenant, onBack }: { tenant: Tenant; onBack: () => v
       <AlertDialog open={!!deleteMember} onOpenChange={(v) => !v && setDeleteMember(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Excluir membro?</AlertDialogTitle>
+            <AlertDialogTitle>Excluir instituição?</AlertDialogTitle>
             <AlertDialogDescription>
               Remove <b>{deleteMember?.full_name ?? deleteMember?.email}</b> desta instituição.
             </AlertDialogDescription>

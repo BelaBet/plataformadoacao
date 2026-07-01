@@ -393,7 +393,7 @@ function SignupPage() {
                   <div className="space-y-3 text-sm text-muted-foreground">
                     <p>
                       <strong>Dados coletados:</strong> nome, e-mail, telefone, documento da instituição, status de
-                      membro.
+                      instituição.
                     </p>
                     <p>
                       <strong>Finalidade:</strong> gestão da comunidade, comunicação, controle de acesso.
