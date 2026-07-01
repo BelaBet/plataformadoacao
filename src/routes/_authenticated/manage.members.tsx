@@ -391,7 +391,7 @@ function TenantMembersView({ tenant, onBack }: { tenant: Tenant; onBack: () => v
           <h1 className="font-display text-2xl flex items-center gap-2">
             <Building2 className="h-6 w-6" /> {tenant.name}
           </h1>
-          <p className="text-sm text-muted-foreground">Membros desta instituição</p>
+          <p className="text-sm text-muted-foreground">Instituições desta instituição</p>
         </div>
       </div>
 
@@ -415,7 +415,7 @@ function TenantMembersView({ tenant, onBack }: { tenant: Tenant; onBack: () => v
               <SelectItem value="blocked">Bloqueado</SelectItem>
             </SelectContent>
           </Select>
-          <Badge variant="outline">{members.length} membros</Badge>
+          <Badge variant="outline">{members.length} instituições</Badge>
         </div>
 
         <div className="overflow-x-auto">
@@ -435,7 +435,7 @@ function TenantMembersView({ tenant, onBack }: { tenant: Tenant; onBack: () => v
               {loading ? (
                 <LoadingRow colSpan={7} />
               ) : filtered.length === 0 ? (
-                <EmptyRow colSpan={7} message="Nenhum membro encontrado." />
+                <EmptyRow colSpan={7} message="Nenhuma instituição encontrada." />
               ) : filtered.map((m) => (
                 <TableRow key={m.id}>
                   <TableCell className="font-medium">{m.full_name ?? "—"}</TableCell>
@@ -448,7 +448,7 @@ function TenantMembersView({ tenant, onBack }: { tenant: Tenant; onBack: () => v
                     >
                       <SelectTrigger className="h-8 w-[130px]"><SelectValue /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="member">Membro</SelectItem>
+                        <SelectItem value="member">Instituição</SelectItem>
                         <SelectItem value="manager">Gestor</SelectItem>
                         <SelectItem value="admin">Admin</SelectItem>
                       </SelectContent>
