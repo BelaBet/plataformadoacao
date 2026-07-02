@@ -7,5 +7,5 @@ export const Route = createFileRoute("/_authenticated/manage/donations")({
 });
 
 function ManageDonations() {
-  return <DonationsTable />;
+  return <DonationsTable showTenantFilter={false} />;
 }
