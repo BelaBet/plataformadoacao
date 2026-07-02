@@ -180,15 +180,6 @@ function AuthLayout() {
         <Outlet />
       </main>
 
-      {/* Powered by TicketConnect — discreet platform attribution */}
-      <footer className="hidden border-t bg-card/40 py-3 text-center text-xs text-muted-foreground md:block">
-        <img
-          src="/__l5e/assets-v1/64e1ae41-9cf7-45e3-ac17-3658b088a3df/ticketconnect-logo-long.jpeg"
-          alt="TicketConnect"
-          className="mx-auto h-5 w-auto opacity-70"
-        />
-      </footer>
-
       {/* Mobile bottom nav */}
       <nav className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-4 border-t bg-card md:hidden">
         {[

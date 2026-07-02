@@ -29,11 +29,6 @@ function AdminLayout() {
           <header className="flex h-12 items-center justify-between gap-3 border-b bg-card/60 px-3 backdrop-blur">
             <div className="flex items-center gap-2">
               <SidebarTrigger />
-              <img
-                src="/__l5e/assets-v1/64e1ae41-9cf7-45e3-ac17-3658b088a3df/ticketconnect-logo-long.jpeg"
-                alt="TicketConnect"
-                className="h-5 w-auto"
-              />
             </div>
             <TenantSwitcher />
           </header>
