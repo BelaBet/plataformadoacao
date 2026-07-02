@@ -194,7 +194,7 @@ export function DonationsReport({ showTenantFilter = true }: { showTenantFilter?
   });
 
   const items = report.data?.items ?? [];
-  const isPlatformAdmin = report.data?.isPlatformAdmin ?? false;
+  const isPlatformAdmin = showTenantFilter && (report.data?.isPlatformAdmin ?? false);
   const totalDonation = items.reduce((sum, i) => sum + i.donationAmountCents, 0);
   const totalFee = items.reduce((sum, i) => sum + i.adminFeeCents, 0);
 
