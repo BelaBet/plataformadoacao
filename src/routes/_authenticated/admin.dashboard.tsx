@@ -5,6 +5,7 @@ import { useImpersonation } from "@/lib/impersonation";
 import { KpiCard } from "@/components/kpi-card";
 import { Card } from "@/components/ui/card";
 import { Building2, Users, Heart, TrendingUp, Calendar, Megaphone, DollarSign, Wallet } from "lucide-react";
+import { fmtDate } from "@/components/financeiro/format";
 
 export const Route = createFileRoute("/_authenticated/admin/dashboard")({
   component: AdminDashboard,
@@ -82,18 +83,21 @@ function AdminDashboard() {
     { label: "Transações",         value: data?.txN ?? "—",                         icon: Wallet },
     { label: "Ticket médio",       value: data ? fmtBRL(data.ticket) : "—",         icon: DollarSign },
     { label: "MRR",                value: data ? fmtBRL(data.mrr) : "—",            icon: Megaphone },
-  ];
+  ].filter((k) => {
+    // Numa visão de uma única instituição, "Igrejas" e "Igrejas ativas" sempre
+    // seriam 1 — não fazem sentido nesse contexto, então somem da grade.
+    if (active && tenantId && (k.label === "Igrejas" || k.label === "Igrejas ativas")) return false;
+    return true;
+  });
 
   const { data: ranking } = useQuery({
-    queryKey: ["platform-tenant-ranking", active ? tenantId : null],
+    queryKey: ["platform-tenant-ranking"],
+    enabled: !(active && tenantId),
     queryFn: async () => {
-      let tenantsQ = supabase.from("tenants").select("id,name,slug").is("deleted_at", null);
-      let donsQ = supabase.from("donations").select("tenant_id,amount").is("deleted_at", null);
-      if (active && tenantId) {
-        tenantsQ = tenantsQ.eq("id", tenantId);
-        donsQ = donsQ.eq("tenant_id", tenantId);
-      }
-      const [{ data: tenants }, { data: dons }] = await Promise.all([tenantsQ, donsQ]);
+      const [{ data: tenants }, { data: dons }] = await Promise.all([
+        supabase.from("tenants").select("id,name,slug").is("deleted_at", null),
+        supabase.from("donations").select("tenant_id,amount").is("deleted_at", null),
+      ]);
       const totals = new Map<string, number>();
       (dons ?? []).forEach((d: { tenant_id: string; amount: number }) => {
         totals.set(d.tenant_id, (totals.get(d.tenant_id) ?? 0) + Number(d.amount));
@@ -102,6 +106,23 @@ function AdminDashboard() {
         .map((t) => ({ ...t, total: totals.get(t.id) ?? 0 }))
         .sort((a, b) => b.total - a.total)
         .slice(0, 8);
+    },
+  });
+
+  // Numa visão de uma única instituição, "ranking entre igrejas" não faz sentido
+  // (só existe ela) — mostramos a lista de doações recebidas por ela no lugar.
+  const { data: tenantDonations } = useQuery({
+    queryKey: ["tenant-donations-list", tenantId],
+    enabled: !!(active && tenantId),
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("donations")
+        .select("id, donor_name, amount, created_at")
+        .eq("tenant_id", tenantId as string)
+        .is("deleted_at", null)
+        .order("created_at", { ascending: false })
+        .limit(20);
+      return data ?? [];
     },
   });
 
@@ -123,29 +144,54 @@ function AdminDashboard() {
         ))}
       </div>
 
-      <Card className="p-4">
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="font-display text-lg">Ranking de igrejas — arrecadação</h2>
-          <Link to="/admin/tenants" className="text-xs text-primary hover:underline">
-            Ver todas →
-          </Link>
-        </div>
-        <div className="divide-y">
-          {(ranking ?? []).map((t, i) => (
-            <div key={t.id} className="flex items-center justify-between py-2 text-sm">
-              <div className="flex items-center gap-3">
-                <span className="w-6 text-right font-mono text-xs text-muted-foreground">#{i + 1}</span>
-                <span className="font-medium">{t.name}</span>
-                <span className="text-xs text-muted-foreground">{t.slug}</span>
+      {active && tenantId ? (
+        <Card className="p-4">
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="font-display text-lg">Doações recebidas</h2>
+            <Link to="/admin/donations" className="text-xs text-primary hover:underline">
+              Ver todas →
+            </Link>
+          </div>
+          <div className="divide-y">
+            {(tenantDonations ?? []).map((d) => (
+              <div key={d.id} className="flex items-center justify-between py-2 text-sm">
+                <div className="flex items-center gap-3">
+                  <span className="font-medium">{d.donor_name ?? "Doador"}</span>
+                  <span className="text-xs text-muted-foreground">{fmtDate(d.created_at)}</span>
+                </div>
+                <span className="font-mono">{fmtBRL(Number(d.amount))}</span>
               </div>
-              <span className="font-mono">{fmtBRL(t.total)}</span>
-            </div>
-          ))}
-          {(ranking?.length ?? 0) === 0 && (
-            <p className="py-6 text-center text-sm text-muted-foreground">Nenhuma arrecadação registrada ainda.</p>
-          )}
-        </div>
-      </Card>
+            ))}
+            {(tenantDonations?.length ?? 0) === 0 && (
+              <p className="py-6 text-center text-sm text-muted-foreground">Nenhuma doação registrada ainda.</p>
+            )}
+          </div>
+        </Card>
+      ) : (
+        <Card className="p-4">
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="font-display text-lg">Ranking de igrejas — arrecadação</h2>
+            <Link to="/admin/tenants" className="text-xs text-primary hover:underline">
+              Ver todas →
+            </Link>
+          </div>
+          <div className="divide-y">
+            {(ranking ?? []).map((t, i) => (
+              <div key={t.id} className="flex items-center justify-between py-2 text-sm">
+                <div className="flex items-center gap-3">
+                  <span className="w-6 text-right font-mono text-xs text-muted-foreground">#{i + 1}</span>
+                  <span className="font-medium">{t.name}</span>
+                  <span className="text-xs text-muted-foreground">{t.slug}</span>
+                </div>
+                <span className="font-mono">{fmtBRL(t.total)}</span>
+              </div>
+            ))}
+            {(ranking?.length ?? 0) === 0 && (
+              <p className="py-6 text-center text-sm text-muted-foreground">Nenhuma arrecadação registrada ainda.</p>
+            )}
+          </div>
+        </Card>
+      )}
     </div>
   );
 }
