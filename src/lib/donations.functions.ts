@@ -300,7 +300,14 @@ export const getDonationDetail = createServerFn({ method: "POST" })
         donorPhone = d.donor_phone;
         grossAmountCents = d.gross_amount;
         netAmountCents = d.net_amount ?? netAmountCents;
-        adminFeeCents = d.admin_fee;
+        // NOTA: admin_fee no banco guarda só a parcela ADM TK2 (3,52%), não a
+        // taxa total (também inclui adquirente + taxa fixa Pagar.me). A taxa
+        // real cobrada do doador é sempre bruto − líquido — mesmo cálculo já
+        // usado em getDonationsReport(). Não usar d.admin_fee diretamente aqui.
+        adminFeeCents =
+          grossAmountCents != null && netAmountCents != null
+            ? Math.max(grossAmountCents - netAmountCents, 0)
+            : d.admin_fee;
       }
     }
 
