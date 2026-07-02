@@ -14,7 +14,6 @@ import {
 } from "@/components/ui/sidebar";
 import {
   LayoutDashboard,
-  Users,
   Megaphone,
   Calendar,
   Settings,
@@ -34,7 +33,6 @@ const MANAGE_ITEMS = [
   { title: "Dashboard", url: "/manage/dashboard", icon: LayoutDashboard },
   { title: "Doações", url: "/manage/donations", icon: HeartHandshake },
   { title: "Relatórios", url: "/manage/relatorios", icon: ScrollText },
-  { title: "Instituições", url: "/manage/members", icon: Users },
   { title: "Eventos", url: "/manage/events", icon: Calendar },
   { title: "Mensagens", url: "/manage/mensagens", icon: Megaphone },
   { title: "Configurações", url: "/manage/settings", icon: Settings },
