@@ -167,7 +167,7 @@ function buildPdf(items: DonationReportItem[], periodStart: string, periodEnd: s
   doc.save(fileName);
 }
 
-export function DonationsReport() {
+export function DonationsReport({ showTenantFilter = true }: { showTenantFilter?: boolean } = {}) {
   const [period, setPeriod] = useState(currentMonthRange);
   const [tenantFilter, setTenantFilter] = useState<string>("all");
 
@@ -177,8 +177,10 @@ export function DonationsReport() {
   const tenants = useQuery({
     queryKey: ["donation-tenant-options"],
     queryFn: () => tenantsFn(),
+    enabled: showTenantFilter,
   });
-  const isPlatformView = tenants.data?.isPlatformAdmin ?? false;
+  const isPlatformView = showTenantFilter && (tenants.data?.isPlatformAdmin ?? false);
+
 
   const report = useQuery({
     queryKey: ["donations-report", period, tenantFilter],
