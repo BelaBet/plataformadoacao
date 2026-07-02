@@ -30,7 +30,7 @@ import { useTenant } from "@/lib/tenant-context";
 import { initials } from "@/lib/utils";
 
 const MANAGE_ITEMS = [
-  { title: "Dashboard", url: "/manage/dashboard", icon: LayoutDashboard },
+  { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
   { title: "Doações", url: "/manage/donations", icon: HeartHandshake },
   { title: "Relatórios", url: "/manage/relatorios", icon: ScrollText },
   { title: "Eventos", url: "/manage/events", icon: Calendar },
