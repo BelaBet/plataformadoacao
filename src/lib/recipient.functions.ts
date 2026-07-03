@@ -463,3 +463,97 @@ export const getPlatformFeeRevenue = createServerFn({ method: "POST" })
       bySeller: Array.from(bySellerMap.values()),
     };
   });
+
+export type WithdrawalReportItem = {
+  id: string;
+  type: "transfer" | "anticipation";
+  status: string;
+  amountCents: number;
+  feeCents: number;
+  createdAt: string;
+};
+
+async function resolveRecipientForTenant(tenantId: string): Promise<string> {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data: tps } = await supabaseAdmin
+    .from("tenant_payment_settings")
+    .select("pagarme_recipient_id")
+    .eq("tenant_id", tenantId)
+    .maybeSingle();
+  const recId = (tps as { pagarme_recipient_id?: string | null } | null)?.pagarme_recipient_id;
+  if (!recId) throw new Error("Esta instituição ainda não está habilitada para receber pagamentos.");
+  return recId;
+}
+
+export const getWithdrawalsReport = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { periodStart?: string; periodEnd?: string; tenantId?: string }) =>
+    z
+      .object({
+        periodStart: z.string().optional(),
+        periodEnd: z.string().optional(),
+        tenantId: z.string().uuid().optional(),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    let recipientId: string;
+    if (data.tenantId) {
+      // Super admin path — verify platform role
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const { data: pr } = await supabaseAdmin
+        .from("platform_roles")
+        .select("role")
+        .eq("user_id", (context as { userId: string }).userId)
+        .limit(1)
+        .maybeSingle();
+      if (!pr) throw new Error("Acesso restrito à plataforma");
+      recipientId = await resolveRecipientForTenant(data.tenantId);
+    } else {
+      recipientId = await resolveRecipientId("tenant", context as never);
+    }
+
+    const [transfers, anticipations] = await Promise.all([
+      pagarme<{ data: TransferItem[] }>(`/recipients/${recipientId}/transfers?page=1&size=100`).catch(
+        () => ({ data: [] as TransferItem[] }),
+      ),
+      pagarme<{ data: AnticipationItem[] }>(
+        `/recipients/${recipientId}/anticipations?page=1&size=100`,
+      ).catch(() => ({ data: [] as AnticipationItem[] })),
+    ]);
+
+    const start = data.periodStart ? new Date(`${data.periodStart}T00:00:00`) : null;
+    const end = data.periodEnd ? new Date(`${data.periodEnd}T23:59:59`) : null;
+    const inRange = (iso: string) => {
+      const d = new Date(iso);
+      if (start && d < start) return false;
+      if (end && d > end) return false;
+      return true;
+    };
+
+    const items: WithdrawalReportItem[] = [];
+    for (const t of transfers.data ?? []) {
+      if (!t.created_at || !inRange(t.created_at)) continue;
+      items.push({
+        id: t.id,
+        type: "transfer",
+        status: t.status,
+        amountCents: t.amount ?? 0,
+        feeCents: 0,
+        createdAt: t.created_at,
+      });
+    }
+    for (const a of anticipations.data ?? []) {
+      if (!a.created_at || !inRange(a.created_at)) continue;
+      items.push({
+        id: a.id,
+        type: "anticipation",
+        status: a.status,
+        amountCents: a.amount ?? 0,
+        feeCents: (a.anticipation_fee ?? a.fee ?? 0) as number,
+        createdAt: a.created_at,
+      });
+    }
+    items.sort((x, y) => (x.createdAt < y.createdAt ? 1 : -1));
+    return { items };
+  });
