@@ -560,5 +560,6 @@ export const getWithdrawalsReport = createServerFn({ method: "POST" })
       });
     }
     items.sort((x, y) => (x.createdAt < y.createdAt ? 1 : -1));
-    return { items };
+    return { items, unavailable: false as const };
   });
+
