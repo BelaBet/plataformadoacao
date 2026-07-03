@@ -498,20 +498,25 @@ export const getWithdrawalsReport = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     let recipientId: string;
-    if (data.tenantId) {
-      // Super admin path — verify platform role
-      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-      const { data: pr } = await supabaseAdmin
-        .from("platform_roles")
-        .select("role")
-        .eq("user_id", (context as { userId: string }).userId)
-        .limit(1)
-        .maybeSingle();
-      if (!pr) throw new Error("Acesso restrito à plataforma");
-      recipientId = await resolveRecipientForTenant(data.tenantId);
-    } else {
-      recipientId = await resolveRecipientId("tenant", context as never);
+    try {
+      if (data.tenantId) {
+        // Super admin path — verify platform role
+        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+        const { data: pr } = await supabaseAdmin
+          .from("platform_roles")
+          .select("role")
+          .eq("user_id", (context as { userId: string }).userId)
+          .limit(1)
+          .maybeSingle();
+        if (!pr) throw new Error("Acesso restrito à plataforma");
+        recipientId = await resolveRecipientForTenant(data.tenantId);
+      } else {
+        recipientId = await resolveRecipientId("tenant", context as never);
+      }
+    } catch {
+      return { items: [] as WithdrawalReportItem[], unavailable: true as const };
     }
+
 
     const [transfers, anticipations] = await Promise.all([
       pagarme<{ data: TransferItem[] }>(`/recipients/${recipientId}/transfers?page=1&size=100`).catch(
@@ -555,5 +560,6 @@ export const getWithdrawalsReport = createServerFn({ method: "POST" })
       });
     }
     items.sort((x, y) => (x.createdAt < y.createdAt ? 1 : -1));
-    return { items };
+    return { items, unavailable: false as const };
   });
+
