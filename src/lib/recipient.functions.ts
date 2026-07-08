@@ -483,9 +483,9 @@ export const getPlatformFeeRevenue = createServerFn({ method: "POST" })
 export type WithdrawalReportItem = {
   id: string;
   type: "transfer" | "anticipation";
+  status: string;
   amountCents: number;
   feeCents: number;
-  status: string;
   createdAt: string;
 };
 
@@ -527,11 +527,18 @@ export const getWithdrawalsReport = createServerFn({ method: "POST" })
       return { items: [] as WithdrawalReportItem[], unavailable: true as const };
     }
 
-    const recipientId = await resolveRecipientId(
-      "tenant",
-      ctx,
-      isPlatformAdmin ? data.tenantId : undefined,
-    );
+    let recipientId: string;
+    try {
+      recipientId = await resolveRecipientId(
+        "tenant",
+        ctx,
+        isPlatformAdmin ? data.tenantId : undefined,
+      );
+    } catch {
+      // Instituição ainda sem recipient configurado no Pagar.me, ou sem
+      // permissão — mostra "indisponível" na tela em vez de quebrar a página.
+      return { items: [] as WithdrawalReportItem[], unavailable: true as const };
+    }
 
     const start = new Date(`${data.periodStart}T00:00:00.000Z`).getTime();
     const end = new Date(`${data.periodEnd}T23:59:59.999Z`).getTime();
@@ -556,25 +563,29 @@ export const getWithdrawalsReport = createServerFn({ method: "POST" })
     }
 
     const [transfers, anticipations] = await Promise.all([
-      fetchAllPages<TransferItem>(`/recipients/${recipientId}/transfers`),
-      fetchAllPages<AnticipationItem>(`/recipients/${recipientId}/anticipations`),
+      fetchAllPages<TransferItem>(`/recipients/${recipientId}/transfers`).catch(
+        () => [] as TransferItem[],
+      ),
+      fetchAllPages<AnticipationItem>(`/recipients/${recipientId}/anticipations`).catch(
+        () => [] as AnticipationItem[],
+      ),
     ]);
 
     const items: WithdrawalReportItem[] = [
       ...transfers.map((t) => ({
         id: t.id,
         type: "transfer" as const,
+        status: t.status,
         amountCents: t.amount,
         feeCents: 0,
-        status: t.status,
         createdAt: t.created_at,
       })),
       ...anticipations.map((a) => ({
         id: a.id,
         type: "anticipation" as const,
+        status: a.status,
         amountCents: a.net_amount ?? a.amount,
         feeCents: a.fee ?? a.anticipation_fee ?? 0,
-        status: a.status,
         createdAt: a.created_at,
       })),
     ]

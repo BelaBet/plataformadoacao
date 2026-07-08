@@ -143,8 +143,7 @@ function ManageEventsPage() {
         <div>
           <h1 className="font-display text-3xl md:text-4xl">Eventos</h1>
           <p className="mt-1 text-muted-foreground">
-            Cadastre eventos da igreja. A inscrição é feita no link externo (TicketTO, Sympla,
-            Eventbrite, Hotmart ou site próprio).
+            Cadastre eventos da igreja. A inscrição é feita no link externo (TicketTO).
           </p>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
@@ -231,8 +230,7 @@ function ManageEventsPage() {
                   onChange={(e) => setForm({ ...form, external_url: e.target.value })}
                 />
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Padrão: TicketTO. Também aceitamos Sympla, Eventbrite, Hotmart ou site próprio da
-                  igreja.
+                  Padrão: TicketTO.
                 </p>
               </div>
               <DialogFooter>
