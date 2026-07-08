@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { EmptyRow, LoadingRow } from "@/components/empty-row";
-import { Eye, Pause, Play, Trash2 } from "lucide-react";
+import { Eye, Pause, Play, Trash2, Plus, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { translateError } from "@/lib/translate-error";
 
@@ -93,9 +93,17 @@ function TenantsPage() {
 
   return (
     <div className="space-y-4">
-      <div>
-        <h1 className="font-display text-3xl">Gestão de Igrejas</h1>
-        <p className="text-sm text-muted-foreground">Todas as igrejas da plataforma.</p>
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <h1 className="font-display text-3xl">Gestão de Igrejas</h1>
+          <p className="text-sm text-muted-foreground">Todas as igrejas da plataforma.</p>
+        </div>
+        <Button asChild className="gap-2">
+          <Link to="/igrejas/nova" search={{ tenantId: undefined }}>
+            <Plus className="h-4 w-4" />
+            Adicionar Igreja
+          </Link>
+        </Button>
       </div>
       <Card className="overflow-x-auto">
         <Table className="min-w-[820px]">
@@ -133,6 +141,11 @@ function TenantsPage() {
                 <TableCell className="text-xs">{new Date(t.created_at).toLocaleDateString("pt-BR")}</TableCell>
                 <TableCell>
                   <div className="flex justify-end gap-1">
+                    <Button size="icon" variant="ghost" title="Editar igreja" asChild>
+                      <Link to="/igrejas/nova" search={{ tenantId: t.id }}>
+                        <Pencil className="h-4 w-4" />
+                      </Link>
+                    </Button>
                     <Button size="icon" variant="ghost" title="Acessar como" onClick={() => { setImperId(t.id); setImperReason(""); }}>
                       <Eye className="h-4 w-4" />
                     </Button>

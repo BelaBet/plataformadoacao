@@ -47,6 +47,7 @@ async function resolveRecipientId(
     supabase: ReturnType<typeof import("@supabase/supabase-js").createClient>;
     userId: string;
   },
+  explicitTenantId?: string,
 ): Promise<string> {
   if (scope === "platform") {
     // Verify platform role
@@ -63,12 +64,27 @@ async function resolveRecipientId(
     return id;
   }
   // tenant scope
-  const { data: profile } = await ctx.supabase
-    .from("profiles")
-    .select("tenant_id")
-    .eq("id", ctx.userId)
-    .maybeSingle();
-  const tenantId = (profile as { tenant_id?: string } | null)?.tenant_id;
+  let tenantId: string | undefined;
+  if (explicitTenantId) {
+    // Só um platform admin pode consultar o recipient de uma instituição que
+    // não é a sua própria (ex: gerar relatório de saques de outra igreja).
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: pr } = await supabaseAdmin
+      .from("platform_roles")
+      .select("role")
+      .eq("user_id", ctx.userId)
+      .limit(1)
+      .maybeSingle();
+    if (!pr) throw new Error("Acesso restrito à plataforma");
+    tenantId = explicitTenantId;
+  } else {
+    const { data: profile } = await ctx.supabase
+      .from("profiles")
+      .select("tenant_id")
+      .eq("id", ctx.userId)
+      .maybeSingle();
+    tenantId = (profile as { tenant_id?: string } | null)?.tenant_id;
+  }
   if (!tenantId) throw new Error("Tenant não encontrado");
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { data: tps } = await supabaseAdmin
@@ -462,4 +478,111 @@ export const getPlatformFeeRevenue = createServerFn({ method: "POST" })
       breakdown: totals,
       bySeller: Array.from(bySellerMap.values()),
     };
+  });
+
+export type WithdrawalReportItem = {
+  id: string;
+  type: "transfer" | "anticipation";
+  amountCents: number;
+  feeCents: number;
+  status: string;
+  createdAt: string;
+};
+
+/**
+ * Retiradas (transfers) e antecipações do período, para o relatório em PDF.
+ * A API do Pagar.me não filtra por data — busca as páginas necessárias e
+ * filtra created_at no período localmente.
+ */
+export const getWithdrawalsReport = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(
+    (d: { periodStart: string; periodEnd: string; tenantId?: string }) =>
+      z
+        .object({
+          periodStart: z.string().min(8),
+          periodEnd: z.string().min(8),
+          tenantId: z.string().uuid().optional(),
+        })
+        .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const ctx = context as unknown as {
+      supabase: ReturnType<typeof import("@supabase/supabase-js").createClient>;
+      userId: string;
+    };
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: pr } = await supabaseAdmin
+      .from("platform_roles")
+      .select("role")
+      .eq("user_id", ctx.userId)
+      .limit(1)
+      .maybeSingle();
+    const isPlatformAdmin = !!pr;
+
+    if (isPlatformAdmin && !data.tenantId) {
+      // "Todas as instituições" não tem um único recipient para consultar —
+      // saques/antecipações são por instituição.
+      return { items: [] as WithdrawalReportItem[], unavailable: true as const };
+    }
+
+    const recipientId = await resolveRecipientId(
+      "tenant",
+      ctx,
+      isPlatformAdmin ? data.tenantId : undefined,
+    );
+
+    const start = new Date(`${data.periodStart}T00:00:00.000Z`).getTime();
+    const end = new Date(`${data.periodEnd}T23:59:59.999Z`).getTime();
+
+    async function fetchAllPages<T extends { created_at: string }>(
+      path: string,
+    ): Promise<T[]> {
+      const out: T[] = [];
+      let page = 1;
+      // Os resultados vêm ordenados do mais recente para o mais antigo; para
+      // quando a página inteira já está fora (mais antiga) do período.
+      for (let i = 0; i < 20; i++) {
+        const res = await pagarme<{ data: T[] }>(`${path}?page=${page}&size=50`);
+        const items = res.data ?? [];
+        if (items.length === 0) break;
+        out.push(...items);
+        const oldest = new Date(items[items.length - 1].created_at).getTime();
+        if (oldest < start) break;
+        page += 1;
+      }
+      return out;
+    }
+
+    const [transfers, anticipations] = await Promise.all([
+      fetchAllPages<TransferItem>(`/recipients/${recipientId}/transfers`),
+      fetchAllPages<AnticipationItem>(`/recipients/${recipientId}/anticipations`),
+    ]);
+
+    const items: WithdrawalReportItem[] = [
+      ...transfers.map((t) => ({
+        id: t.id,
+        type: "transfer" as const,
+        amountCents: t.amount,
+        feeCents: 0,
+        status: t.status,
+        createdAt: t.created_at,
+      })),
+      ...anticipations.map((a) => ({
+        id: a.id,
+        type: "anticipation" as const,
+        amountCents: a.net_amount ?? a.amount,
+        feeCents: a.fee ?? a.anticipation_fee ?? 0,
+        status: a.status,
+        createdAt: a.created_at,
+      })),
+    ]
+      .filter((i) => {
+        const t = new Date(i.createdAt).getTime();
+        return t >= start && t <= end;
+      })
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+    return { items, unavailable: false as const };
   });

@@ -1,8 +1,8 @@
 import { createFileRoute, useRouter, Link } from "@tanstack/react-router";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useAuth } from "@/lib/auth-context";
-import { provisionTenant } from "@/lib/tenant-signup.functions";
+import { provisionTenant, getTenantForEdit, updateTenantFull } from "@/lib/tenant-signup.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,6 +23,9 @@ import { cpf, cnpj } from "cpf-cnpj-validator";
 
 export const Route = createFileRoute("/_authenticated/igrejas/nova")({
   component: WizardGate,
+  validateSearch: (search: Record<string, unknown>) => ({
+    tenantId: typeof search.tenantId === "string" ? search.tenantId : undefined,
+  }),
   head: () => ({ meta: [{ title: "Nova Igreja — Super Admin" }] }),
 });
 
@@ -185,10 +188,92 @@ const REQUIRED_DOCS = [
 
 function WizardPage() {
   const router = useRouter();
+  const { tenantId: editTenantId } = Route.useSearch();
+  const isEditing = !!editTenantId;
   const [step, setStep] = useState(0);
   const [s, setS] = useState<WizardState>(initial);
   const [busy, setBusy] = useState(false);
+  const [loadingEdit, setLoadingEdit] = useState(isEditing);
   const provision = useServerFn(provisionTenant);
+  const fetchEdit = useServerFn(getTenantForEdit);
+  const update = useServerFn(updateTenantFull);
+
+  useEffect(() => {
+    if (!isEditing) return;
+    (async () => {
+      try {
+        const result = await fetchEdit({ data: { tenantId: editTenantId! } });
+        const tenant = result.tenant as NonNullable<typeof result.tenant>;
+        // legal/address/bank/fin vêm de tabelas consultadas com "as any" em
+        // getTenantForEdit (não estão nos tipos gerados do Supabase), o que
+        // faz o client inferir SelectQueryError em vez do formato real —
+        // mesmo padrão de "as any" já usado no resto do arquivo pra essas
+        // tabelas.
+        const legal = result.legal as any;
+        const address = result.address as any;
+        const bank = result.bank as any;
+        const fin = result.fin as any;
+        const phones = result.phones as any[];
+        const phone = phones?.[0];
+        setS((p) => ({
+          ...p,
+          church_name: tenant.name ?? "",
+          trade_name: tenant.trade_name ?? "",
+          legal_name: tenant.legal_name ?? "",
+          document: tenant.document ?? "",
+          institutional_email: tenant.institutional_email ?? "",
+          main_phone: tenant.main_phone ?? "",
+          website: tenant.website ?? "",
+          description: tenant.description ?? "",
+          logo_url: tenant.logo_url ?? "",
+          cover_photo_url: tenant.cover_photo_url ?? "",
+          tagline: tenant.tagline ?? "",
+          primary_color: tenant.primary_color ?? p.primary_color,
+          secondary_color: tenant.secondary_color ?? p.secondary_color,
+          accent_color: tenant.accent_color ?? p.accent_color,
+          resp_full_name: legal?.full_name ?? "",
+          resp_cpf: legal?.cpf ?? "",
+          resp_birth_date: legal?.birth_date ?? "",
+          resp_mother_name: legal?.mother_name ?? "",
+          resp_role: legal?.role ?? "",
+          resp_email: legal?.email ?? "",
+          resp_phone_ddd: phone?.ddd ?? "",
+          resp_phone_number: phone?.number ?? "",
+          cep: address?.cep ?? "",
+          street: address?.street ?? "",
+          number: address?.number ?? "",
+          no_number: address?.no_number ?? false,
+          complement: address?.complement ?? "",
+          neighborhood: address?.neighborhood ?? "",
+          city: address?.city ?? "",
+          state: address?.state ?? "",
+          uf: address?.uf ?? "",
+          reference_point: address?.reference_point ?? "",
+          bank_code: bank?.bank_code ?? "",
+          branch: bank?.branch ?? "",
+          branch_digit: bank?.branch_digit ?? "",
+          account: bank?.account ?? "",
+          account_digit: bank?.account_digit ?? "",
+          account_type: bank?.account_type ?? "checking",
+          holder_name: bank?.holder_name ?? "",
+          holder_document: bank?.holder_document ?? "",
+          use_pagarme: fin?.use_pagarme ?? true,
+          pagarme_recipient_id: fin?.pagarme_recipient_id ?? "",
+          split_platform_percent: fin?.split_platform_percent ? Number(fin.split_platform_percent) * 100 : p.split_platform_percent,
+          auto_anticipation: fin?.auto_anticipation ?? false,
+          anticipation_model: fin?.anticipation_model ?? "",
+          anticipation_days: fin?.anticipation_days != null ? String(fin.anticipation_days) : "",
+          auto_transfer: fin?.auto_transfer ?? false,
+          transfer_frequency: fin?.transfer_frequency ?? "",
+        }));
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : "Falha ao carregar dados da instituição.");
+      } finally {
+        setLoadingEdit(false);
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isEditing, editTenantId]);
 
   const set = <K extends keyof WizardState>(k: K, v: WizardState[K]) =>
     setS((p) => ({ ...p, [k]: v }));
@@ -233,79 +318,91 @@ function WizardPage() {
             ]
           : undefined;
 
+      const commonData = {
+        church_name: s.church_name,
+        document: onlyDigits(s.document),
+        institution: {
+          trade_name: s.trade_name || undefined,
+          legal_name: s.legal_name || undefined,
+          institutional_email: s.institutional_email || undefined,
+          main_phone: s.main_phone || undefined,
+          website: s.website || undefined,
+          description: s.description || undefined,
+        },
+        branding: {
+          logo_url: s.logo_url || undefined,
+          cover_photo_url: s.cover_photo_url || undefined,
+          tagline: s.tagline || undefined,
+          primary_color: s.primary_color,
+          secondary_color: s.secondary_color,
+          accent_color: s.accent_color,
+        },
+        legal_responsible: s.resp_full_name
+          ? {
+              full_name: s.resp_full_name,
+              cpf: onlyDigits(s.resp_cpf),
+              email: s.resp_email || undefined,
+              birth_date: s.resp_birth_date || undefined,
+              mother_name: s.resp_mother_name || undefined,
+              role: s.resp_role || undefined,
+            }
+          : undefined,
+        address: s.cep
+          ? {
+              cep: onlyDigits(s.cep),
+              street: s.street,
+              number: s.no_number ? undefined : s.number,
+              no_number: s.no_number,
+              complement: s.complement || undefined,
+              neighborhood: s.neighborhood,
+              city: s.city,
+              state: s.state,
+              uf: s.uf.toUpperCase(),
+              reference_point: s.reference_point || undefined,
+            }
+          : undefined,
+        phones,
+        bank: s.bank_code
+          ? {
+              bank_code: s.bank_code,
+              branch: s.branch,
+              branch_digit: s.branch_digit || undefined,
+              account: s.account,
+              account_digit: s.account_digit,
+              account_type: s.account_type,
+              holder_name: s.holder_name,
+              holder_document: onlyDigits(s.holder_document),
+            }
+          : undefined,
+        financial: {
+          use_pagarme: s.use_pagarme,
+          pagarme_recipient_id: s.use_pagarme && s.pagarme_recipient_id
+            ? s.pagarme_recipient_id
+            : undefined,
+          split_platform_percent: s.split_platform_percent / 100,
+          auto_anticipation: s.auto_anticipation,
+          anticipation_model: s.anticipation_model || undefined,
+          anticipation_days: s.anticipation_days
+            ? Number(s.anticipation_days)
+            : undefined,
+          auto_transfer: s.auto_transfer,
+          transfer_frequency: s.transfer_frequency || undefined,
+          receiver_type: onlyDigits(s.document).length === 14 ? "pj" as const : "pf" as const,
+        },
+      };
+
+      if (isEditing) {
+        const res = await update({ data: { tenantId: editTenantId!, data: commonData } });
+        toast.success("Igreja atualizada com sucesso!");
+        if (res.warnings?.length) res.warnings.forEach((w) => toast.warning(w));
+        router.navigate({ to: "/admin/tenants" });
+        return;
+      }
+
       const res = await provision({
         data: {
-          church_name: s.church_name,
-          document: onlyDigits(s.document),
+          ...commonData,
           document_type: onlyDigits(s.document).length === 14 ? "cnpj" : "cpf",
-          institution: {
-            trade_name: s.trade_name || undefined,
-            legal_name: s.legal_name || undefined,
-            institutional_email: s.institutional_email || undefined,
-            main_phone: s.main_phone || undefined,
-            website: s.website || undefined,
-            description: s.description || undefined,
-          },
-          branding: {
-            logo_url: s.logo_url || undefined,
-            cover_photo_url: s.cover_photo_url || undefined,
-            tagline: s.tagline || undefined,
-            primary_color: s.primary_color,
-            secondary_color: s.secondary_color,
-            accent_color: s.accent_color,
-          },
-          legal_responsible: s.resp_full_name
-            ? {
-                full_name: s.resp_full_name,
-                cpf: onlyDigits(s.resp_cpf),
-                email: s.resp_email || undefined,
-                birth_date: s.resp_birth_date || undefined,
-                mother_name: s.resp_mother_name || undefined,
-                role: s.resp_role || undefined,
-              }
-            : undefined,
-          address: s.cep
-            ? {
-                cep: onlyDigits(s.cep),
-                street: s.street,
-                number: s.no_number ? undefined : s.number,
-                no_number: s.no_number,
-                complement: s.complement || undefined,
-                neighborhood: s.neighborhood,
-                city: s.city,
-                state: s.state,
-                uf: s.uf.toUpperCase(),
-                reference_point: s.reference_point || undefined,
-              }
-            : undefined,
-          phones,
-          bank: s.bank_code
-            ? {
-                bank_code: s.bank_code,
-                branch: s.branch,
-                branch_digit: s.branch_digit || undefined,
-                account: s.account,
-                account_digit: s.account_digit,
-                account_type: s.account_type,
-                holder_name: s.holder_name,
-                holder_document: onlyDigits(s.holder_document),
-              }
-            : undefined,
-          financial: {
-            use_pagarme: s.use_pagarme,
-            pagarme_recipient_id: s.use_pagarme && s.pagarme_recipient_id
-              ? s.pagarme_recipient_id
-              : undefined,
-            split_platform_percent: s.split_platform_percent / 100,
-            auto_anticipation: s.auto_anticipation,
-            anticipation_model: s.anticipation_model || undefined,
-            anticipation_days: s.anticipation_days
-              ? Number(s.anticipation_days)
-              : undefined,
-            auto_transfer: s.auto_transfer,
-            transfer_frequency: s.transfer_frequency || undefined,
-            receiver_type: onlyDigits(s.document).length === 14 ? "pj" : "pf",
-          },
           admin: s.admin_email
             ? {
                 email: s.admin_email,

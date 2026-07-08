@@ -1,5 +1,24 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+
+/**
+ * getTenantForEdit e updateTenantFull expõem/alteram dados sensíveis de
+ * QUALQUER instituição (responsável legal com CPF, conta bancária,
+ * endereço, config financeira) usando supabaseAdmin (service role,
+ * ignora RLS). Precisam ser restritas a super admin explicitamente aqui,
+ * já que não há política de RLS te protegendo nesse caminho.
+ */
+async function assertPlatformAdmin(userId: string) {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data } = await supabaseAdmin
+    .from("platform_roles")
+    .select("user_id")
+    .eq("user_id", userId)
+    .limit(1)
+    .maybeSingle();
+  if (!data) throw new Error("Apenas super administradores podem editar instituições.");
+}
 
 const HEX = /^#[0-9A-Fa-f]{6}$/;
 
@@ -154,6 +173,12 @@ async function generateQrDataUrl(url: string): Promise<string> {
   });
 }
 
+// NOTA: provisionTenant é compartilhada com o cadastro público de igrejas
+// (reserveTenantForSignup, abaixo, é literalmente um alias desta função) —
+// por isso NÃO pode ter uma trava de super admin aqui. O controle de quem
+// pode criar via o wizard (/igrejas/nova) fica só na tela (WizardGate),
+// igual já era antes. getTenantForEdit e updateTenantFull, mais abaixo,
+// são exclusivas do super admin e essas sim têm a trava adicionada.
 export const provisionTenant = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => InputSchema.parse(d))
   .handler(async ({ data }: { data: Input }) => {
@@ -435,3 +460,152 @@ export const provisionTenant = createServerFn({ method: "POST" })
 
 // Alias retrocompatível
 export const reserveTenantForSignup = provisionTenant;
+
+// ─────────────────────── Edição (super admin) ───────────────────────
+// Reaproveita os mesmos schemas de validação e o mesmo layout de dados do
+// wizard de cadastro (/igrejas/nova), mas para UPDATE em vez de INSERT —
+// não reserva slug novo, não convida admin novo, não recria centro de
+// custo/QR Code (esses já existem desde o cadastro original).
+
+const UpdateInputSchema = InputSchema.omit({ admin: true, document_type: true }).extend({
+  document_type: z.enum(["cnpj", "cpf"]).optional(),
+});
+type UpdateInput = z.infer<typeof UpdateInputSchema>;
+
+export const getTenantForEdit = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ tenantId: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertPlatformAdmin(context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const [{ data: tenant }, { data: legal }, { data: address }, { data: phones }, { data: bank }, { data: fin }] =
+      await Promise.all([
+        supabaseAdmin.from("tenants").select("*").eq("id", data.tenantId).maybeSingle(),
+        supabaseAdmin.from("tenant_legal_responsible" as any).select("*").eq("tenant_id", data.tenantId).maybeSingle(),
+        supabaseAdmin.from("tenant_address" as any).select("*").eq("tenant_id", data.tenantId).maybeSingle(),
+        supabaseAdmin.from("tenant_contact_phone" as any).select("*").eq("tenant_id", data.tenantId),
+        supabaseAdmin.from("tenant_bank_account" as any).select("*").eq("tenant_id", data.tenantId).maybeSingle(),
+        supabaseAdmin.from("tenant_financial_config" as any).select("*").eq("tenant_id", data.tenantId).maybeSingle(),
+      ]);
+    if (!tenant) throw new Error("Instituição não encontrada.");
+    return { tenant, legal, address, phones: phones ?? [], bank, fin };
+  });
+
+export const updateTenantFull = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z.object({ tenantId: z.string().uuid(), data: UpdateInputSchema }).parse(d),
+  )
+  .handler(async ({ data: input, context }) => {
+    await assertPlatformAdmin(context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { tenantId, data } = input;
+    const warnings: string[] = [];
+
+    const inst = data.institution ?? {};
+    const br = data.branding ?? {};
+    const tenantUpdate: Record<string, unknown> = {
+      name: data.church_name,
+      document: data.document.replace(/\D/g, ""),
+    };
+    if (inst.trade_name !== undefined) tenantUpdate.trade_name = inst.trade_name;
+    if (inst.legal_name !== undefined) tenantUpdate.legal_name = inst.legal_name;
+    if (inst.institutional_email !== undefined) tenantUpdate.institutional_email = inst.institutional_email;
+    if (inst.main_phone !== undefined) tenantUpdate.main_phone = inst.main_phone;
+    if (inst.website !== undefined) tenantUpdate.website = inst.website;
+    if (inst.description !== undefined) tenantUpdate.description = inst.description;
+    if (br.logo_url !== undefined) tenantUpdate.logo_url = br.logo_url;
+    if (br.cover_photo_url !== undefined) tenantUpdate.cover_photo_url = br.cover_photo_url;
+    if (br.primary_color !== undefined) tenantUpdate.primary_color = br.primary_color;
+    if (br.secondary_color !== undefined) tenantUpdate.secondary_color = br.secondary_color;
+    if (br.accent_color !== undefined) tenantUpdate.accent_color = br.accent_color;
+    if (br.tagline !== undefined) tenantUpdate.tagline = br.tagline;
+
+    const { error: tErr } = await supabaseAdmin.from("tenants").update(tenantUpdate as any).eq("id", tenantId);
+    if (tErr) throw new Error(`Falha ao atualizar a instituição: ${tErr.message}`);
+
+    if (data.legal_responsible) {
+      const lr = data.legal_responsible;
+      const { error } = await supabaseAdmin.from("tenant_legal_responsible" as any).upsert(
+        {
+          tenant_id: tenantId,
+          full_name: lr.full_name,
+          cpf: lr.cpf.replace(/\D/g, ""),
+          email: lr.email,
+          birth_date: lr.birth_date,
+          mother_name: lr.mother_name,
+          role: lr.role,
+          monthly_revenue: lr.monthly_revenue,
+        },
+        { onConflict: "tenant_id" },
+      );
+      if (error) warnings.push(`responsável legal: ${error.message}`);
+    }
+
+    if (data.address) {
+      const ad = data.address;
+      const { error } = await supabaseAdmin.from("tenant_address" as any).upsert(
+        {
+          tenant_id: tenantId,
+          cep: ad.cep.replace(/\D/g, ""),
+          street: ad.street,
+          number: ad.number,
+          no_number: ad.no_number ?? false,
+          complement: ad.complement,
+          neighborhood: ad.neighborhood,
+          city: ad.city,
+          state: ad.state,
+          uf: ad.uf.toUpperCase(),
+          reference_point: ad.reference_point,
+        },
+        { onConflict: "tenant_id" },
+      );
+      if (error) warnings.push(`endereço: ${error.message}`);
+    }
+
+    if (data.phones) {
+      await supabaseAdmin.from("tenant_contact_phone" as any).delete().eq("tenant_id", tenantId);
+      if (data.phones.length) {
+        const { error } = await supabaseAdmin
+          .from("tenant_contact_phone" as any)
+          .insert(data.phones.map((p) => ({ tenant_id: tenantId, ...p })));
+        if (error) warnings.push(`telefones: ${error.message}`);
+      }
+    }
+
+    if (data.bank) {
+      const { error } = await supabaseAdmin.from("tenant_bank_account" as any).upsert(
+        {
+          tenant_id: tenantId,
+          ...data.bank,
+          holder_document: data.bank.holder_document.replace(/\D/g, ""),
+        },
+        { onConflict: "tenant_id" },
+      );
+      if (error) warnings.push(`banco: ${error.message}`);
+    }
+
+    if (data.financial) {
+      const fin = data.financial;
+      const splitPlatform = typeof fin.split_platform_percent === "number" ? fin.split_platform_percent : 0.0415;
+      const { error } = await supabaseAdmin.from("tenant_financial_config" as any).upsert(
+        {
+          tenant_id: tenantId,
+          use_pagarme: fin.use_pagarme ?? true,
+          pagarme_recipient_id: fin.pagarme_recipient_id ?? null,
+          split_platform_percent: splitPlatform,
+          auto_anticipation: fin.auto_anticipation ?? false,
+          anticipation_model: fin.anticipation_model ?? null,
+          anticipation_days: fin.anticipation_days ?? null,
+          auto_transfer: fin.auto_transfer ?? false,
+          transfer_frequency: fin.transfer_frequency ?? null,
+        },
+        { onConflict: "tenant_id" },
+      );
+      if (error) warnings.push(`config financeira: ${error.message}`);
+    }
+
+    await supabaseAdmin.rpc("recompute_tenant_compliance" as any, { _tenant_id: tenantId });
+
+    return { tenant_id: tenantId, warnings };
+  });
