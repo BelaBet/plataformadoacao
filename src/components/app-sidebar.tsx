@@ -43,6 +43,7 @@ const PLATFORM_ITEMS = [
   { title: "Dashboard", url: "/admin/dashboard", icon: LayoutDashboard },
   { title: "Igrejas", url: "/admin/tenants", icon: Building2 },
   { title: "Doações", url: "/admin/donations", icon: HeartHandshake },
+  { title: "Eventos", url: "/admin/events", icon: Calendar },
   { title: "Relatórios", url: "/admin/relatorios", icon: ScrollText },
   { title: "Financeiro", url: "/admin/financeiro", icon: Wallet },
   { title: "Plataforma TicketConnect", url: "/admin/settings", icon: Settings },
