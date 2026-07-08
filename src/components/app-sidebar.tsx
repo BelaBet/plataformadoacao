@@ -33,6 +33,7 @@ const MANAGE_ITEMS = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
   { title: "Doações", url: "/manage/donations", icon: HeartHandshake },
   { title: "Relatórios", url: "/manage/relatorios", icon: ScrollText },
+  { title: "Financeiro", url: "/dashboard/financeiro", icon: Wallet },
   { title: "Eventos", url: "/manage/events", icon: Calendar },
   { title: "Mensagens", url: "/manage/mensagens", icon: Megaphone },
   { title: "Configurações", url: "/manage/settings", icon: Settings },
