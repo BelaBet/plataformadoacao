@@ -641,7 +641,7 @@ function EventCard({ event, accent, primary }: { event: EventItem; accent: strin
 
   return (
     <a
-      href="https://www.ticketto.com.br"
+      href={event.ticketUrl}
       target="_blank"
       rel="noopener noreferrer"
       onMouseEnter={() => setHovered(true)}
