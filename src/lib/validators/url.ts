@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-// URL externa genérica (TicketTO, Sympla, Eventbrite, Hotmart, site próprio…).
+// URL externa genérica de evento (TicketTO ou site próprio).
 // Mantida genérica para permitir integrações futuras sem mudança estrutural.
 export const externalEventUrlSchema = z
   .string()
