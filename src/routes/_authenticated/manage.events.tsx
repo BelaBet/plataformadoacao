@@ -114,6 +114,7 @@ function ManageEventsPage() {
         description: parsed.description || null,
         banner_url: parsed.banner_url || null,
         external_url: parsed.external_url,
+        status: "active",
       });
       if (error) throw error;
     },
