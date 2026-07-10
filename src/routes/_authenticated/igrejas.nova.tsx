@@ -2,6 +2,7 @@ import { createFileRoute, useRouter, Link } from "@tanstack/react-router";
 import { useState, useMemo, useEffect } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useAuth } from "@/lib/auth-context";
+import { supabase } from "@/integrations/supabase/client";
 import { provisionTenant, getTenantForEdit, updateTenantFull } from "@/lib/tenant-signup.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Upload } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -194,9 +196,28 @@ function WizardPage() {
   const [s, setS] = useState<WizardState>(initial);
   const [busy, setBusy] = useState(false);
   const [loadingEdit, setLoadingEdit] = useState(isEditing);
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoUploading, setLogoUploading] = useState(false);
   const provision = useServerFn(provisionTenant);
   const fetchEdit = useServerFn(getTenantForEdit);
   const update = useServerFn(updateTenantFull);
+
+  // Faz o upload do arquivo escolhido para o bucket tenant-logos (já existia,
+  // nunca tinha sido usado) e devolve a URL pública. tenant-logos exige que o
+  // primeiro segmento do caminho seja o tenant_id (é assim que a RLS do bucket
+  // decide quem pode escrever); por isso só dá pra subir depois de ter um id
+  // de tenant — no modo criação, isso só existe depois do provisionTenant.
+  async function uploadLogo(tenantId: string): Promise<string> {
+    const ext = logoFile!.name.split(".").pop() || "png";
+    const path = `${tenantId}/logo-${Date.now()}.${ext}`;
+    const { error } = await supabase.storage.from("tenant-logos").upload(path, logoFile!, {
+      upsert: true,
+      contentType: logoFile!.type || undefined,
+    });
+    if (error) throw new Error(`Falha ao enviar a logo: ${error.message}`);
+    const { data } = supabase.storage.from("tenant-logos").getPublicUrl(path);
+    return data.publicUrl;
+  }
 
   useEffect(() => {
     if (!isEditing) return;
@@ -392,6 +413,14 @@ function WizardPage() {
       };
 
       if (isEditing) {
+        if (logoFile) {
+          setLogoUploading(true);
+          try {
+            commonData.branding = { ...commonData.branding, logo_url: await uploadLogo(editTenantId!) };
+          } finally {
+            setLogoUploading(false);
+          }
+        }
         const res = await update({ data: { tenantId: editTenantId!, data: commonData } });
         toast.success("Igreja atualizada com sucesso!");
         if (res.warnings?.length) res.warnings.forEach((w) => toast.warning(w));
@@ -411,6 +440,20 @@ function WizardPage() {
             : undefined,
         },
       });
+
+      if (logoFile) {
+        setLogoUploading(true);
+        try {
+          const logo_url = await uploadLogo(res.tenant_id);
+          await update({ data: { tenantId: res.tenant_id, data: { branding: { logo_url } } } });
+        } catch (e) {
+          // A igreja já foi criada com sucesso; só a logo falhou — avisa mas
+          // não trata como erro fatal do cadastro inteiro.
+          toast.warning(e instanceof Error ? e.message : "Igreja criada, mas a logo não pôde ser enviada. Edite a igreja para tentar de novo.");
+        } finally {
+          setLogoUploading(false);
+        }
+      }
 
       toast.success("Igreja criada com sucesso!");
       if (res.warnings?.length) {
@@ -442,7 +485,7 @@ function WizardPage() {
 
       <Card>
         <CardContent className="space-y-5 pt-6">
-          {step === 0 && <Step1 s={s} set={set} />}
+          {step === 0 && <Step1 s={s} set={set} logoFile={logoFile} setLogoFile={setLogoFile} />}
           {step === 1 && <Step2 s={s} set={set} />}
           {step === 2 && <Step3 s={s} set={set} fetchCep={fetchCep} />}
           {step === 3 && <Step4 s={s} set={set} />}
@@ -576,7 +619,9 @@ function Field({
   );
 }
 
-function Step1({ s, set }: { s: WizardState; set: SetFn }) {
+function Step1({
+  s, set, logoFile, setLogoFile,
+}: { s: WizardState; set: SetFn; logoFile: File | null; setLogoFile: (f: File | null) => void }) {
   return (
     <div className="grid gap-4 md:grid-cols-2">
       <Field label="Nome da Igreja" required>
@@ -608,8 +653,28 @@ function Step1({ s, set }: { s: WizardState; set: SetFn }) {
           <Textarea rows={3} value={s.description} onChange={(e) => set("description", e.target.value)} />
         </Field>
       </div>
-      <Field label="Logo (URL)">
-        <Input value={s.logo_url} onChange={(e) => set("logo_url", e.target.value)} placeholder="https://..." />
+      <Field label="Logo">
+        <div className="flex items-center gap-3">
+          <Button type="button" variant="outline" size="sm" className="gap-1.5" asChild>
+            <label>
+              <Upload className="h-3.5 w-3.5" />
+              {logoFile ? "Trocar arquivo" : "Enviar arquivo"}
+              <input
+                type="file"
+                accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                className="hidden"
+                onChange={(e) => setLogoFile(e.target.files?.[0] ?? null)}
+              />
+            </label>
+          </Button>
+          {logoFile && <span className="text-xs text-muted-foreground">{logoFile.name}</span>}
+        </div>
+        <Input
+          className="mt-2"
+          value={s.logo_url}
+          onChange={(e) => { setLogoFile(null); set("logo_url", e.target.value); }}
+          placeholder="ou cole uma URL (https://...)"
+        />
       </Field>
       <Field label="Foto de Capa (URL)">
         <Input value={s.cover_photo_url} onChange={(e) => set("cover_photo_url", e.target.value)} placeholder="https://..." />
@@ -626,8 +691,12 @@ function Step1({ s, set }: { s: WizardState; set: SetFn }) {
       <div className="md:col-span-2 rounded-md border p-4" style={{ background: s.secondary_color }}>
         <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Preview página pública</div>
         <div className="mt-2 flex items-center gap-3">
-          {s.logo_url && (
-            <img src={s.logo_url} alt="" className="h-12 w-12 rounded bg-white object-contain p-1" />
+          {(logoFile || s.logo_url) && (
+            <img
+              src={logoFile ? URL.createObjectURL(logoFile) : s.logo_url}
+              alt=""
+              className="h-12 w-12 rounded bg-white object-contain p-1"
+            />
           )}
           <div>
             <div style={{ color: s.primary_color, fontWeight: 600 }}>{s.church_name || "Nome da igreja"}</div>
