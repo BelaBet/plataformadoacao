@@ -7,7 +7,29 @@ const InputSchema = z.object({
   base64: z.string().min(1).max(8_000_000), // ~6MB
   contentType: z.string().regex(/^image\/(png|jpe?g|webp)$/, "Tipo de imagem inválido"),
   filename: z.string().min(1).max(120),
+  tenantId: z.string().uuid().optional(),
 });
+
+const AdminEventSchema = z.object({
+  tenant_id: z.string().uuid(),
+  title: z.string().trim().min(2).max(140),
+  date: z.string().datetime().nullable().optional(),
+  location: z.string().trim().max(200).nullable().optional(),
+  description: z.string().trim().max(2000).nullable().optional(),
+  banner_url: z.string().url().nullable().optional(),
+  external_url: z.string().url(),
+});
+
+async function assertPlatformAdmin(userId: string) {
+  const { data: roles } = await supabaseAdmin
+    .from("platform_roles")
+    .select("role")
+    .eq("user_id", userId);
+  if (!roles?.length) {
+    throw new Error("Acesso restrito a administradores da plataforma.");
+  }
+}
+
 
 /** Upload do banner de um evento para o bucket público event-banners. */
 export const uploadEventBanner = createServerFn({ method: "POST" })
@@ -16,15 +38,22 @@ export const uploadEventBanner = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const userId = context.userId;
 
-    const { data: prof, error: pErr } = await supabaseAdmin
-      .from("profiles")
-      .select("tenant_id")
-      .eq("id", userId)
-      .maybeSingle();
-    if (pErr || !prof?.tenant_id) {
-      throw new Error("Perfil ou igreja não encontrados para este usuário.");
+    let tenantId: string | null = null;
+    if (data.tenantId) {
+      // Só permite escolher tenant se for platform admin
+      await assertPlatformAdmin(userId);
+      tenantId = data.tenantId;
+    } else {
+      const { data: prof, error: pErr } = await supabaseAdmin
+        .from("profiles")
+        .select("tenant_id")
+        .eq("id", userId)
+        .maybeSingle();
+      if (pErr || !prof?.tenant_id) {
+        throw new Error("Perfil ou igreja não encontrados para este usuário.");
+      }
+      tenantId = prof.tenant_id as string;
     }
-    const tenantId = prof.tenant_id as string;
 
     const ext = (data.filename.split(".").pop() || "png").toLowerCase().replace("jpeg", "jpg");
     const path = `${tenantId}/banner-${Date.now()}.${ext}`;
@@ -42,13 +71,7 @@ export const uploadEventBanner = createServerFn({ method: "POST" })
 export const getAllEvents = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data: roles } = await supabaseAdmin
-      .from("platform_roles")
-      .select("role")
-      .eq("user_id", context.userId);
-    if (!roles?.length) {
-      throw new Error("Acesso restrito a administradores da plataforma.");
-    }
+    await assertPlatformAdmin(context.userId);
 
     const { data, error } = await supabaseAdmin
       .from("events")
@@ -59,3 +82,38 @@ export const getAllEvents = createServerFn({ method: "GET" })
     if (error) throw error;
     return data ?? [];
   });
+
+/** Lista igrejas ativas (para seleção pelo super admin). */
+export const listTenantsForAdmin = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertPlatformAdmin(context.userId);
+    const { data, error } = await supabaseAdmin
+      .from("tenants")
+      .select("id,name,slug")
+      .is("deleted_at", null)
+      .order("name", { ascending: true });
+    if (error) throw error;
+    return data ?? [];
+  });
+
+/** Cria um evento em qualquer igreja (apenas super admin). Evento já entra ativo. */
+export const createEventAsAdmin = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => AdminEventSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    await assertPlatformAdmin(context.userId);
+    const { error } = await supabaseAdmin.from("events").insert({
+      tenant_id: data.tenant_id,
+      title: data.title,
+      date: data.date ?? null,
+      location: data.location ?? null,
+      description: data.description ?? null,
+      banner_url: data.banner_url ?? null,
+      external_url: data.external_url,
+      status: "active",
+    });
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+

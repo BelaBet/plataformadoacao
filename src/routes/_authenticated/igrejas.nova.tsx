@@ -459,6 +459,9 @@ function WizardPage() {
       if (res.warnings?.length) {
         res.warnings.forEach((w) => toast.warning(w));
       }
+      if (res.slug && typeof window !== "undefined") {
+        window.open(`/i/${res.slug}`, "_blank", "noopener,noreferrer");
+      }
       router.navigate({ to: "/igrejas" });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Falha ao criar igreja.");

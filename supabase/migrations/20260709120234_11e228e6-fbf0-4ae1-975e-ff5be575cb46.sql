@@ -1,0 +1,1 @@
+DROP POLICY IF EXISTS cost_centers_anon_public_select ON public.cost_centers; REVOKE SELECT ON public.cost_centers FROM anon;
