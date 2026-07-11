@@ -311,7 +311,7 @@ export const getDonationDetail = createServerFn({ method: "POST" })
       }
     }
 
-    const billingAddress = extractBillingAddress(r.gateway_request);
+    const billingAddress = null; // gateway_request está REVOKEd para o client
 
     let tenantName: string | null = null;
     if (access.isPlatformAdmin) {
