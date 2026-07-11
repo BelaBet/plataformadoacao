@@ -266,7 +266,6 @@ export const getDonationDetail = createServerFn({ method: "POST" })
       error_message: string | null;
       gateway_id: string | null;
       created_at: string;
-      gateway_request: unknown;
       reference_id: string | null;
     };
     const { data: row, error } = await query.maybeSingle();
