@@ -118,7 +118,7 @@ export function AppSidebar() {
 
         {isPlatformAdmin && (
           <SidebarGroup>
-            <SidebarGroupLabel>Plataforma</SidebarGroupLabel>
+            <SidebarGroupLabel className="h-auto py-2 leading-tight">Plataforma&nbsp;{"\n"}TicketConnect</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
                 {PLATFORM_ITEMS.map((i) => (
