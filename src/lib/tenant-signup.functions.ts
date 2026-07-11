@@ -102,7 +102,7 @@ const FinancialSchema = z
     use_pagarme: z.boolean().optional(),
     pagarme_recipient_id: z
       .string()
-      .regex(/^rp_[A-Za-z0-9]+$/, "pagarme_recipient_id inválido")
+      .regex(/^re_[A-Za-z0-9]+$/, "pagarme_recipient_id inválido (deve começar com 're_', formato do Pagar.me v5)")
       .optional(),
     split_platform_percent: z.number().min(0).max(1).optional(),
     auto_anticipation: z.boolean().optional(),
