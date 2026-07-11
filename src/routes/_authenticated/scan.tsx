@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
+import { useEffectiveTenantId } from "@/lib/impersonation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,7 +17,8 @@ export const Route = createFileRoute("/_authenticated/scan")({
 type Result = { ok: true; eventTitle: string; member: string } | { ok: false; reason: string };
 
 function ScanPage() {
-  const { roles } = useAuth();
+  const { roles, profile } = useAuth();
+  const tenantId = useEffectiveTenantId(profile?.tenant_id);
   const isStaff = roles.includes("manager") || roles.includes("admin");
   const [code, setCode] = useState("");
   const [result, setResult] = useState<Result | null>(null);
@@ -25,12 +27,13 @@ function ScanPage() {
   if (!isStaff) return <p className="text-sm text-muted-foreground">Acesso restrito a gestores.</p>;
 
   const validate = async () => {
-    if (!code.trim()) return;
+    if (!code.trim() || !tenantId) return;
     setLoading(true); setResult(null);
     const { data, error } = await supabase
       .from("tickets")
       .select("id, status, profiles(full_name), events(title)")
       .eq("qr_code_data", code.trim())
+      .eq("tenant_id", tenantId)
       .maybeSingle();
     if (error || !data) {
       setResult({ ok: false, reason: "Ingresso não encontrado." });
