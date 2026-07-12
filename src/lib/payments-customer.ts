@@ -1,54 +1,5 @@
-import { getRequest } from "@tanstack/react-start/server";
-import { createClient } from "@supabase/supabase-js";
-import type { Database } from "@/integrations/supabase/types";
-
-/** Lê o token Bearer da request (se houver) e retorna dados do perfil logado. */
-export async function getOptionalAuthProfile(): Promise<
-  | {
-      userId: string;
-      fullName: string | null;
-      email: string | null;
-      phone: string | null;
-    }
-  | null
-> {
-  try {
-    const req = getRequest();
-    const auth = req?.headers?.get("authorization");
-    if (!auth?.startsWith("Bearer ")) return null;
-    const token = auth.slice(7).trim();
-    if (!token) return null;
-
-    const url = process.env.SUPABASE_URL;
-    const key = process.env.SUPABASE_PUBLISHABLE_KEY;
-    if (!url || !key) return null;
-
-    const supa = createClient<Database>(url, key, {
-      global: { headers: { Authorization: `Bearer ${token}` } },
-      auth: { persistSession: false, autoRefreshToken: false, storage: undefined },
-    });
-
-    const { data: claimsRes, error } = await supa.auth.getClaims(token);
-    if (error || !claimsRes?.claims?.sub) return null;
-    const userId = claimsRes.claims.sub as string;
-
-    const { data: profile } = await supa
-      .from("profiles")
-      .select("full_name, email, phone")
-      .eq("id", userId)
-      .maybeSingle();
-
-    const claimEmail = (claimsRes.claims as { email?: string }).email ?? null;
-    return {
-      userId,
-      fullName: profile?.full_name ?? null,
-      email: profile?.email ?? claimEmail ?? null,
-      phone: profile?.phone ?? null,
-    };
-  } catch {
-    return null;
-  }
-}
+// Nenhuma consulta de sessão/perfil aqui de propósito — ver nota em
+// resolveCustomer() abaixo sobre por que isso nunca deve ser reintroduzido.
 
 function parseBrPhone(raw: string) {
   const digits = raw.replace(/\D/g, "");
@@ -65,17 +16,12 @@ export type ResolvedCustomer = {
 };
 
 /**
- * Combina o que o doador digitou no modal (prioridade) com o perfil do
- * usuário logado, se houver, apenas como complemento para campos que o
- * doador deixou em branco. Documento é sempre tomado do input (não existe
- * coluna `document` em profiles).
- *
- * IMPORTANTE: nunca inverter essa prioridade. Se o perfil da sessão logada
- * (ex: um funcionário da igreja testando a própria página pública) vier
- * antes do input, o nome que o doador de fato digitou é silenciosamente
- * substituído pelo nome de quem está autenticado no navegador — foi
- * exatamente esse bug que fez o nome da igreja aparecer no lugar do nome
- * do doador no Pagar.me.
+ * Usa exclusivamente o que o doador digitou no modal. Todos os campos são
+ * obrigatórios no formulário, então não existe caso legítimo de precisar
+ * complementar com dado de outra fonte (ex: perfil da sessão logada) — e
+ * fazer isso foi exatamente o bug que trocava o nome do doador pelo nome
+ * de quem estivesse autenticado no navegador ao acessar a página pública.
+ * Nunca reintroduzir um fallback de perfil aqui.
  */
 export async function resolveCustomer(input: {
   customerName?: string;
@@ -83,9 +29,8 @@ export async function resolveCustomer(input: {
   customerDocument?: string;
   customerPhone?: string;
 }): Promise<ResolvedCustomer> {
-  const profile = await getOptionalAuthProfile();
-  const name = input.customerName ?? profile?.fullName ?? null;
-  const email = input.customerEmail ?? profile?.email ?? null;
+  const name = input.customerName ?? null;
+  const email = input.customerEmail ?? null;
   const docDigits = input.customerDocument
     ? input.customerDocument.replace(/\D/g, "")
     : "";
@@ -95,8 +40,7 @@ export async function resolveCustomer(input: {
       ? "CNPJ"
       : "CPF"
     : null;
-  const phoneRaw = input.customerPhone ?? profile?.phone ?? null;
-  const phone = phoneRaw ? phoneRaw.replace(/\D/g, "") : null;
+  const phone = input.customerPhone ? input.customerPhone.replace(/\D/g, "") : null;
   return { name, email, document, documentType, phone };
 }
 
