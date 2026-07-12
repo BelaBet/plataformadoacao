@@ -65,8 +65,17 @@ export type ResolvedCustomer = {
 };
 
 /**
- * Combina perfil do usuário logado (prioridade) com dados informados no input.
- * Documento é sempre tomado do input (não existe coluna `document` em profiles).
+ * Combina o que o doador digitou no modal (prioridade) com o perfil do
+ * usuário logado, se houver, apenas como complemento para campos que o
+ * doador deixou em branco. Documento é sempre tomado do input (não existe
+ * coluna `document` em profiles).
+ *
+ * IMPORTANTE: nunca inverter essa prioridade. Se o perfil da sessão logada
+ * (ex: um funcionário da igreja testando a própria página pública) vier
+ * antes do input, o nome que o doador de fato digitou é silenciosamente
+ * substituído pelo nome de quem está autenticado no navegador — foi
+ * exatamente esse bug que fez o nome da igreja aparecer no lugar do nome
+ * do doador no Pagar.me.
  */
 export async function resolveCustomer(input: {
   customerName?: string;
@@ -75,8 +84,8 @@ export async function resolveCustomer(input: {
   customerPhone?: string;
 }): Promise<ResolvedCustomer> {
   const profile = await getOptionalAuthProfile();
-  const name = profile?.fullName ?? input.customerName ?? null;
-  const email = profile?.email ?? input.customerEmail ?? null;
+  const name = input.customerName ?? profile?.fullName ?? null;
+  const email = input.customerEmail ?? profile?.email ?? null;
   const docDigits = input.customerDocument
     ? input.customerDocument.replace(/\D/g, "")
     : "";
@@ -86,7 +95,7 @@ export async function resolveCustomer(input: {
       ? "CNPJ"
       : "CPF"
     : null;
-  const phoneRaw = profile?.phone ?? input.customerPhone ?? null;
+  const phoneRaw = input.customerPhone ?? profile?.phone ?? null;
   const phone = phoneRaw ? phoneRaw.replace(/\D/g, "") : null;
   return { name, email, document, documentType, phone };
 }
