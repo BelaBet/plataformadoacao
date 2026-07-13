@@ -22,6 +22,7 @@ import {
 import { StatusBadge } from "@/components/financeiro/StatusBadge";
 import { brl, fmtDate, translateMethod } from "@/components/financeiro/format";
 import { getDonationsList, getTenantOptions } from "@/lib/donations.functions";
+import { useImpersonation } from "@/lib/impersonation";
 import { DonationDetailDialog } from "./DonationDetailDialog";
 import { Search, Inbox } from "lucide-react";
 
