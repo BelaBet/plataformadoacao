@@ -22,6 +22,7 @@ import {
 import { StatusBadge } from "@/components/financeiro/StatusBadge";
 import { brl, fmtDate, translateMethod } from "@/components/financeiro/format";
 import { getDonationsList, getTenantOptions } from "@/lib/donations.functions";
+import { useImpersonation } from "@/lib/impersonation";
 import { DonationDetailDialog } from "./DonationDetailDialog";
 import { Search, Inbox } from "lucide-react";
 
@@ -39,24 +40,36 @@ export function DonationsTable({ showTenantFilter = true }: { showTenantFilter?:
   const [search, setSearch] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
+  const { active: impersonating, tenantId: impersonatedTenantId } = useImpersonation();
+
   const listFn = useServerFn(getDonationsList);
   const tenantsFn = useServerFn(getTenantOptions);
 
   const tenants = useQuery({
     queryKey: ["donation-tenant-options"],
     queryFn: () => tenantsFn(),
-    enabled: showTenantFilter,
+    enabled: showTenantFilter && !impersonating,
   });
-  const isPlatformView = showTenantFilter && (tenants.data?.isPlatformAdmin ?? false);
+  const isPlatformView =
+    showTenantFilter && !impersonating && (tenants.data?.isPlatformAdmin ?? false);
 
+  // Quando um super admin impersona uma igreja, força o filtro para o tenant
+  // impersonado — mesmo sendo super admin de verdade, a tela de Doações deve
+  // mostrar somente as informações da igreja em questão.
+  const effectiveTenantId =
+    impersonating && impersonatedTenantId
+      ? impersonatedTenantId
+      : tenantFilter !== "all"
+        ? tenantFilter
+        : undefined;
 
   const donations = useQuery({
-    queryKey: ["donations-list", period, tenantFilter],
+    queryKey: ["donations-list", period, effectiveTenantId ?? "all"],
     queryFn: () =>
       listFn({
         data: {
           ...period,
-          tenantId: tenantFilter !== "all" ? tenantFilter : undefined,
+          tenantId: effectiveTenantId,
           page: 1,
           size: 50,
         },

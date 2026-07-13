@@ -30,6 +30,7 @@ import {
   type DonationReportItem,
 } from "@/lib/donations.functions";
 import { getWithdrawalsReport, type WithdrawalReportItem } from "@/lib/recipient.functions";
+import { useImpersonation } from "@/lib/impersonation";
 import { Download, FileText, Inbox, Landmark } from "lucide-react";
 
 function currentMonthRange() {
@@ -280,30 +281,42 @@ export function DonationsReport({ showTenantFilter = true }: { showTenantFilter?
   const [tenantFilter, setTenantFilter] = useState<string>("all");
   const [generatingPdf, setGeneratingPdf] = useState(false);
 
+  const { active: impersonating, tenantId: impersonatedTenantId } = useImpersonation();
+
   const reportFn = useServerFn(getDonationsReport);
   const tenantsFn = useServerFn(getTenantOptions);
 
   const tenants = useQuery({
     queryKey: ["donation-tenant-options"],
     queryFn: () => tenantsFn(),
-    enabled: showTenantFilter,
+    enabled: showTenantFilter && !impersonating,
   });
-  const isPlatformView = showTenantFilter && (tenants.data?.isPlatformAdmin ?? false);
+  const isPlatformView =
+    showTenantFilter && !impersonating && (tenants.data?.isPlatformAdmin ?? false);
 
+  // Impersonação força o escopo para a igreja acessada, ignorando o filtro
+  // "Todas as instituições" (o super admin tem acesso real, mas essa tela
+  // deve refletir apenas a igreja em que ele está atuando).
+  const effectiveTenantId =
+    impersonating && impersonatedTenantId
+      ? impersonatedTenantId
+      : tenantFilter !== "all"
+        ? tenantFilter
+        : undefined;
 
   const report = useQuery({
-    queryKey: ["donations-report", period, tenantFilter],
+    queryKey: ["donations-report", period, effectiveTenantId ?? "all"],
     queryFn: () =>
       reportFn({
         data: {
           ...period,
-          tenantId: tenantFilter !== "all" ? tenantFilter : undefined,
+          tenantId: effectiveTenantId,
         },
       }),
   });
 
   const items = report.data?.items ?? [];
-  const isPlatformAdmin = showTenantFilter && (report.data?.isPlatformAdmin ?? false);
+  const isPlatformAdmin = showTenantFilter && !impersonating && (report.data?.isPlatformAdmin ?? false);
   const totalDonation = items.reduce((sum, i) => sum + i.donationAmountCents, 0);
   const totalFee = items.reduce((sum, i) => sum + i.adminFeeCents, 0);
 
@@ -312,15 +325,15 @@ export function DonationsReport({ showTenantFilter = true }: { showTenantFilter?
   // específica está selecionada — "Todas as instituições" não tem um único
   // recipient para consultar no Pagar.me.
   const withdrawalsFn = useServerFn(getWithdrawalsReport);
-  const canLoadWithdrawals = !isPlatformView || tenantFilter !== "all";
+  const canLoadWithdrawals = !isPlatformView || effectiveTenantId !== undefined;
   const withdrawals = useQuery({
-    queryKey: ["withdrawals-report", period, tenantFilter],
+    queryKey: ["withdrawals-report", period, effectiveTenantId ?? "all"],
     enabled: canLoadWithdrawals,
     queryFn: () =>
       withdrawalsFn({
         data: {
           ...period,
-          tenantId: isPlatformView && tenantFilter !== "all" ? tenantFilter : undefined,
+          tenantId: isPlatformView ? effectiveTenantId : undefined,
         },
       }),
   });
