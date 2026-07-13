@@ -30,6 +30,7 @@ import {
   type DonationReportItem,
 } from "@/lib/donations.functions";
 import { getWithdrawalsReport, type WithdrawalReportItem } from "@/lib/recipient.functions";
+import { useImpersonation } from "@/lib/impersonation";
 import { Download, FileText, Inbox, Landmark } from "lucide-react";
 
 function currentMonthRange() {
