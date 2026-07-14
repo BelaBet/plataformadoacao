@@ -370,14 +370,18 @@ export const pollPixCharge = createServerFn({ method: "POST" })
     const orderStatus: string = json?.status ?? "";
     const chargeStatus: string = charge?.status ?? "";
 
-    const mapped: "paid" | "failed" | null =
-      chargeStatus === "paid" ? "paid" : chargeStatus === "failed" || chargeStatus === "refused" ? "failed" : null;
+    // Mesmo problema do webhook: o enum public.payment_status não tem
+    // 'paid', só 'confirmed'. Gravar 'paid' fazia essa atualização falhar
+    // silenciosamente no banco, deixando o pagamento preso em 'pending'
+    // mesmo já confirmado no Pagar.me.
+    const mapped: "confirmed" | "failed" | null =
+      chargeStatus === "paid" ? "confirmed" : chargeStatus === "failed" || chargeStatus === "refused" ? "failed" : null;
 
     if (mapped) {
       const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
       await supabaseAdmin
         .from("payments")
-        .update({ status: mapped as any })
+        .update({ status: mapped })
         .eq("gateway_id", data.gatewayId);
     }
 

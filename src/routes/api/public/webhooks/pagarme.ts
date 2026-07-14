@@ -1,12 +1,20 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { supabaseAdmin } from '@/integrations/supabase/client.server';
+import type { Database } from '@/integrations/supabase/types';
 
-// Map Pagar.me event types -> our payments.status enum
-function mapEventToStatus(eventType: string): string | null {
+type PaymentStatus = Database['public']['Enums']['payment_status'];
+
+// Map Pagar.me event types -> our payments.status enum.
+// IMPORTANTE: o enum public.payment_status só tem 'pending', 'confirmed',
+// 'failed', 'refunded' — não existe 'paid' nem 'expired'. Antes disso mapear
+// para esses valores fazia a gravação falhar silenciosamente no banco
+// (Postgres rejeita valor de enum inválido), deixando o pagamento preso em
+// 'pending' pra sempre mesmo já confirmado no Pagar.me.
+function mapEventToStatus(eventType: string): PaymentStatus | null {
   switch (eventType) {
     case 'order.paid':
     case 'charge.paid':
-      return 'paid';
+      return 'confirmed';
     case 'order.payment_failed':
     case 'charge.payment_failed':
       return 'failed';
@@ -17,7 +25,9 @@ function mapEventToStatus(eventType: string): string | null {
     case 'order.canceled':
     case 'charge.expired':
     case 'order.expired':
-      return 'expired';
+      // Não existe status 'expired' no banco — o mais próximo
+      // semanticamente disponível é 'failed'.
+      return 'failed';
     case 'charge.pending':
     case 'order.pending':
     case 'charge.processing':
@@ -104,7 +114,7 @@ export const Route = createFileRoute('/api/public/webhooks/pagarme')({
 
         const { data: updated, error } = await supabaseAdmin
           .from('payments')
-          .update({ status: newStatus as any })
+          .update({ status: newStatus })
           .in('gateway_id', gatewayIds)
           .select('id, tenant_id, gateway_id, status');
 
