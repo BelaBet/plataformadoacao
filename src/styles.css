@@ -104,11 +104,19 @@
   }
   html {
     font-family: var(--font-sans);
+    /* Trava de segurança: impede que a página inteira role pro lado no
+       celular quando algum elemento específico fica mais largo que a tela
+       (tabela sem quebra, grid apertado, etc). O elemento problemático
+       ainda deve ser corrigido no componente, mas isso evita que o usuário
+       sinta a tela inteira "andando"/balançando ao tocar. */
+    overflow-x: hidden;
   }
   body {
     background: var(--gradient-soft);
     color: var(--color-foreground);
     min-height: 100vh;
+    overflow-x: hidden;
+    width: 100%;
   }
   h1, h2, h3, .font-display {
     font-family: var(--font-display);
