@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/integrations/supabase/client";
 import { provisionTenant, getTenantForEdit, updateTenantFull } from "@/lib/tenant-signup.functions";
+import { validatePagarmeRecipientId } from "@/lib/recipient-registration.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
