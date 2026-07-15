@@ -16,7 +16,7 @@ interface ThemeContextValue {
 }
 
 const DEFAULT_THEME: ChurchTheme = buildTheme(
-  { primary: "#1a3a5c", accent: "#C9993A" },
+  { primary: "#33396B", accent: "#D99A3D" },
   "default",
 );
 

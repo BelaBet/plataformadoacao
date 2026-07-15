@@ -13,8 +13,8 @@ export function TenantThemeBridge({ children }: { children: ReactNode }) {
         tenantId: tenant?.id ?? "default",
         logoUrl: tenant?.logo_url ?? null,
         // Preserve current visual: fallback to existing brand colors / mock palette.
-        fallbackPrimary: tenant?.primary_color ?? "#1a3a5c",
-        fallbackAccent: tenant?.secondary_color ?? "#C9993A",
+        fallbackPrimary: tenant?.primary_color ?? "#33396B",
+        fallbackAccent: tenant?.secondary_color ?? "#D99A3D",
       }}
     >
       {children}
