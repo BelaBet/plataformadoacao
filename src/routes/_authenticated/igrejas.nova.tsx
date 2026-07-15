@@ -780,6 +780,36 @@ function Step4({ s, set }: { s: WizardState; set: SetFn }) {
 }
 
 function Step5({ s, set }: { s: WizardState; set: SetFn }) {
+  const validate = useServerFn(validatePagarmeRecipientId);
+  const [validating, setValidating] = useState(false);
+  const [validation, setValidation] = useState<
+    | { valid: true; status: string; name: string | null; document: string | null; bank: string | null; holderName: string | null }
+    | { valid: false; error: string }
+    | null
+  >(null);
+
+  useEffect(() => {
+    setValidation(null);
+  }, [s.pagarme_recipient_id]);
+
+  const runValidate = async () => {
+    if (!/^rp_[A-Za-z0-9]+$/.test(s.pagarme_recipient_id)) {
+      toast.error("Informe um Recipient ID válido (rp_...).");
+      return;
+    }
+    setValidating(true);
+    try {
+      const res = await validate({ data: { recipientId: s.pagarme_recipient_id } });
+      setValidation(res);
+      if (res.valid) toast.success(`Recebedor encontrado — status: ${res.status}`);
+      else toast.error(res.error);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Falha ao validar recebedor.");
+    } finally {
+      setValidating(false);
+    }
+  };
+
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between rounded-md border p-3">
@@ -795,7 +825,31 @@ function Step5({ s, set }: { s: WizardState; set: SetFn }) {
       {s.use_pagarme && (
         <div className="grid gap-4 md:grid-cols-2">
           <Field label="Recipient ID Pagar.me">
-            <Input value={s.pagarme_recipient_id} onChange={(e) => set("pagarme_recipient_id", e.target.value)} placeholder="rp_..." />
+            <div className="flex gap-2">
+              <Input value={s.pagarme_recipient_id} onChange={(e) => set("pagarme_recipient_id", e.target.value)} placeholder="rp_..." />
+              <Button type="button" variant="outline" onClick={runValidate} disabled={validating || !s.pagarme_recipient_id}>
+                {validating ? <Loader2 className="h-4 w-4 animate-spin" /> : "Validar"}
+              </Button>
+            </div>
+            {validation?.valid && (
+              <div className="mt-2 rounded-md border border-emerald-500/40 bg-emerald-500/5 p-2 text-xs">
+                <div className="flex items-center gap-2 font-medium text-emerald-700">
+                  <Check className="h-3.5 w-3.5" /> Recebedor válido
+                  <Badge variant="secondary" className="ml-1">{validation.status}</Badge>
+                </div>
+                <div className="mt-1 text-muted-foreground">
+                  {validation.name && <div>Nome: {validation.name}</div>}
+                  {validation.document && <div>Doc: {validation.document}</div>}
+                  {validation.bank && <div>Banco: {validation.bank}</div>}
+                  {validation.holderName && <div>Titular: {validation.holderName}</div>}
+                </div>
+              </div>
+            )}
+            {validation && !validation.valid && (
+              <div className="mt-2 rounded-md border border-destructive/40 bg-destructive/5 p-2 text-xs text-destructive">
+                {validation.error}
+              </div>
+            )}
           </Field>
           <Field label="Split da Plataforma (%)">
             <Input type="number" step="0.01" value={s.split_platform_percent} onChange={(e) => set("split_platform_percent", Number(e.target.value))} />
