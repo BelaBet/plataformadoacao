@@ -230,6 +230,41 @@ export const syncRecipientStatus = createServerFn({ method: "POST" })
     }
   });
 
+// ── Validar Recipient ID contra a API Pagar.me (sem persistir) ────────────
+export const validatePagarmeRecipientId = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { recipientId: string }) =>
+    z.object({
+      recipientId: z.string().regex(/^rp_[A-Za-z0-9]+$/, "Recipient ID inválido (deve começar com rp_)"),
+    }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { userId } = context as { userId: string };
+    await assertSuperAdmin(userId);
+
+    try {
+      const result = await pagarme<{
+        id: string;
+        status: string;
+        name?: string;
+        document?: string;
+        default_bank_account?: { bank?: string; holder_name?: string };
+      }>(`/recipients/${data.recipientId}`);
+      return {
+        valid: true as const,
+        recipientId: result.id,
+        status: result.status,
+        name: result.name ?? null,
+        document: result.document ?? null,
+        bank: result.default_bank_account?.bank ?? null,
+        holderName: result.default_bank_account?.holder_name ?? null,
+      };
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      return { valid: false as const, error: msg };
+    }
+  });
+
 // ── Listar tenants com status do recebedor ────────────────────────────────
 export const listTenantsWithRecipientStatus = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
