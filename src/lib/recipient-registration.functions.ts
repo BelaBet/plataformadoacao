@@ -235,7 +235,7 @@ export const validatePagarmeRecipientId = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { recipientId: string }) =>
     z.object({
-      recipientId: z.string().regex(/^rp_[A-Za-z0-9]+$/, "Recipient ID inválido (deve começar com rp_)"),
+      recipientId: z.string().regex(/^re_[A-Za-z0-9]+$/, "Recipient ID inválido (deve começar com re_)"),
     }).parse(d),
   )
   .handler(async ({ data, context }) => {

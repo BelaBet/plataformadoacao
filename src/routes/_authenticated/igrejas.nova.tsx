@@ -570,8 +570,8 @@ function validate(step: number, s: WizardState): string[] {
     if (!(hd.length === 11 ? cpf.isValid(hd) : cnpj.isValid(hd))) e.push("Documento do titular inválido.");
   }
   if (step === 4) {
-    if (s.use_pagarme && s.pagarme_recipient_id && !/^rp_[A-Za-z0-9]+$/.test(s.pagarme_recipient_id))
-      e.push("Recipient ID Pagar.me inválido (deve começar com rp_).");
+    if (s.use_pagarme && s.pagarme_recipient_id && !/^re_[A-Za-z0-9]+$/.test(s.pagarme_recipient_id))
+      e.push("Recipient ID Pagar.me inválido (deve começar com re_).");
     if (s.split_platform_percent < 0 || s.split_platform_percent > 100)
       e.push("Split deve estar entre 0% e 100%.");
   }
@@ -795,8 +795,8 @@ function Step5({ s, set }: { s: WizardState; set: SetFn }) {
   }, [s.pagarme_recipient_id]);
 
   const runValidate = async () => {
-    if (!/^rp_[A-Za-z0-9]+$/.test(s.pagarme_recipient_id)) {
-      toast.error("Informe um Recipient ID válido (rp_...).");
+    if (!/^re_[A-Za-z0-9]+$/.test(s.pagarme_recipient_id)) {
+      toast.error("Informe um Recipient ID válido (re_...).");
       return;
     }
     setValidating(true);
@@ -828,7 +828,7 @@ function Step5({ s, set }: { s: WizardState; set: SetFn }) {
         <div className="grid gap-4 md:grid-cols-2">
           <Field label="Recipient ID Pagar.me">
             <div className="flex gap-2">
-              <Input value={s.pagarme_recipient_id} onChange={(e) => set("pagarme_recipient_id", e.target.value)} placeholder="rp_..." />
+              <Input value={s.pagarme_recipient_id} onChange={(e) => set("pagarme_recipient_id", e.target.value)} placeholder="re_..." />
               <Button type="button" variant="outline" onClick={runValidate} disabled={validating || !s.pagarme_recipient_id}>
                 {validating ? <Loader2 className="h-4 w-4 animate-spin" /> : "Validar"}
               </Button>
