@@ -475,9 +475,11 @@ function WizardPage() {
     <div className="mx-auto max-w-4xl space-y-6 px-4 py-8">
       <header className="flex items-center justify-between">
         <div>
-          <h1 className="font-display text-2xl">Nova Igreja</h1>
+          <h1 className="font-display text-2xl">{isEditing ? "Editar Igreja" : "Nova Igreja"}</h1>
           <p className="text-sm text-muted-foreground">
-            Passo {step + 1} de {STEPS.length}: {STEPS[step]}
+            {loadingEdit
+              ? "Carregando dados da igreja…"
+              : `Passo ${step + 1} de ${STEPS.length}: ${STEPS[step]}`}
           </p>
         </div>
         <Button variant="ghost" asChild>
@@ -523,7 +525,7 @@ function WizardPage() {
         ) : (
           <Button onClick={submit} disabled={busy || !canAdvance}>
             {busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Check className="mr-2 h-4 w-4" />}
-            Criar Igreja
+            {isEditing ? "Salvar Alterações" : "Criar Igreja"}
           </Button>
         )}
       </div>
